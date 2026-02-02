@@ -69,6 +69,13 @@ public class Member extends BaseEntity {
         }
     }
 
+    public String getMaskedName() {
+        if (name.length() <= 1) {
+            return "*";
+        }
+        return name.substring(0, name.length() - 1) + "*";
+    }
+
     public void changePassword(String newEncryptedPassword) {
         this.password = newEncryptedPassword;
     }

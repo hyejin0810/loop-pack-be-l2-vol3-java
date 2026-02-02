@@ -220,6 +220,37 @@ class MemberTest {
         }
     }
 
+    @DisplayName("이름 마스킹")
+    @Nested
+    class GetMaskedName {
+
+        @DisplayName("이름의 마지막 글자가 *으로 반환된다.")
+        @Test
+        void returnsNameWithLastCharMasked() {
+            // Arrange
+            Member member = new Member("testuser", "encrypted", "홍길동", "19900101", "test@example.com");
+
+            // Act
+            String maskedName = member.getMaskedName();
+
+            // Assert
+            assertThat(maskedName).isEqualTo("홍길*");
+        }
+
+        @DisplayName("한 글자 이름이면 *으로 반환된다.")
+        @Test
+        void returnsStar_whenNameIsSingleChar() {
+            // Arrange
+            Member member = new Member("testuser", "encrypted", "김", "19900101", "test@example.com");
+
+            // Act
+            String maskedName = member.getMaskedName();
+
+            // Assert
+            assertThat(maskedName).isEqualTo("*");
+        }
+    }
+
     @DisplayName("비밀번호 변경")
     @Nested
     class ChangePassword {

@@ -34,6 +34,29 @@ class MemberFacadeTest {
         memberFacade = new MemberFacade(memberService, passwordEncoder);
     }
 
+    @DisplayName("내정보 조회")
+    @Nested
+    class GetMyInfo {
+
+        @DisplayName("인증에 성공하면, 이름이 마스킹된 회원 정보를 반환한다.")
+        @Test
+        void returnsMaskedMemberInfo_whenAuthenticated() {
+            // Arrange
+            String loginId = "testuser";
+            String rawPassword = "Test1234!";
+            Member member = new Member(loginId, "encrypted", "홍길동", "19900101", "test@example.com");
+
+            given(memberService.getMember(loginId)).willReturn(member);
+            given(passwordEncoder.matches(rawPassword, member.getPassword())).willReturn(true);
+
+            // Act
+            MemberInfo result = memberFacade.getMyInfo(loginId, rawPassword);
+
+            // Assert
+            assertThat(result.name()).isEqualTo("홍길*");
+        }
+    }
+
     @DisplayName("비밀번호 변경")
     @Nested
     class ChangePassword {

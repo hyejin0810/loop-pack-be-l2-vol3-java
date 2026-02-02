@@ -16,16 +16,9 @@ public record MemberInfo(String loginId, String name, String birthday, String em
     public static MemberInfo fromWithMaskedName(Member member) {
         return new MemberInfo(
             member.getLoginId(),
-            maskLastChar(member.getName()),
+            member.getMaskedName(),
             member.getBirthday(),
             member.getEmail()
         );
-    }
-
-    private static String maskLastChar(String name) {
-        if (name == null || name.length() <= 1) {
-            return "*";
-        }
-        return name.substring(0, name.length() - 1) + "*";
     }
 }

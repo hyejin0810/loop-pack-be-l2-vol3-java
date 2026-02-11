@@ -2,189 +2,130 @@
 
 
 # 좋아요 등록/취소
+
+
+```mermaid
 sequenceDiagram
-title 좋아요 등록/취소
+title 좋아요 처리 (회원 전용)
 actor User as 사용자
+participant Auth as Auth Filter
 participant API as Like API
-participant LikeService as Like Service
-participant LikeRepository as Like Repository
-participant ProductRepository as Product Repository
-participant DB as Database
+participant Service as Like Service
+participant Repo as Like Repository
+participant ProdRepo as Product Repository
 
-    %% ========================================
-    %% 좋아요 등록
-    %% ========================================
-    User->>API: 좋아요 등록
+    User->>Auth: 좋아요/취소 요청 (X-Loopers-LoginId, LoginPw)
+    Auth->>Auth: 회원 인증 및 UserId 추출
+    Auth->>API: 요청 전달 (UserId, ProductId)
+    
     activate API
+    API->>Service: 좋아요/취소 로직 실행
+    activate Service
     
-    API->>LikeService: 좋아요 등록 처리
-    activate LikeService
-    
-    LikeService->>LikeRepository: 중복 확인 (조회)
-    activate LikeRepository
-    LikeRepository->>DB: SELECT 
-    DB-->>LikeRepository: 결과 반환
-    
-    alt 이미 좋아요함
-        LikeRepository-->>LikeService: 중복 예외 던짐
-        deactivate LikeRepository
-        LikeService-->>API: 에러 응답
-        API-->>User: 400 Bad Request (실패)
-    else 좋아요 안함
-        LikeService->>LikeRepository: 좋아요 저장
-        activate LikeRepository
-        LikeRepository->>DB: INSERT
-        deactivate LikeRepository
-        
-        LikeService->>ProductRepository: 좋아요 수 증가
-        activate ProductRepository
-        ProductRepository->>DB: UPDATE (likes_count+1)
-        deactivate ProductRepository
-        
-        LikeService-->>API: 처리 완료
-        deactivate LikeService
-        API-->>User: 200 OK (성공)
+    alt 등록 요청
+        Service->>Repo: 기존 존재 여부 확인
+        Repo-->>Service: 결과 반환
+        alt 미존재
+            Service->>Repo: INSERT (Like)
+            Service->>ProdRepo: UPDATE (likes_count + 1)
+            Service-->>API: 성공
+        else 이미 존재
+            Service-->>API: 400 Bad Request
+        end
+    else 취소 요청
+        Service->>Repo: DELETE (Like)
+        Note right of Service: 삭제 성공 시에만 count 감소
+        Service->>ProdRepo: UPDATE (likes_count - 1)
+        Service-->>API: 성공
     end
+    
+    deactivate Service
+    API-->>User: 200 OK
     deactivate API
+    
+ ```
 
-    %% ========================================
-    %% 좋아요 취소
-    %% ========================================
-    User->>API: 좋아요 취소
-    activate API
-    
-    API->>LikeService: 좋아요 취소 처리
-    activate LikeService
-    
-    LikeService->>LikeRepository: 좋아요 삭제
-    activate LikeRepository
-    LikeRepository->>DB: DELETE
-    deactivate LikeRepository
-    
-    LikeService->>ProductRepository: 좋아요 수 감소
-    activate ProductRepository
-    ProductRepository->>DB: UPDATE (likes_count-1)
-    deactivate ProductRepository
-    
-    LikeService-->>API: 처리 완료
-    deactivate LikeService
-    API-->>User: 200 OK (성공)
-    deactivate API
+
+
+
 # 주문 생성(재고확인 및 차감)
+
+```mermaid
+
 sequenceDiagram
-title 주문 생성 (재고 확인 및 차감)
+title 주문 생성 (재고 차감 및 장바구니 삭제)
 
     actor User as 사용자
     participant API as Order API
-    participant OrderService as Order Service
-    participant ProductRepository as Product Repository
-    participant OrderRepository as Order Repository
-    participant CartRepository as Cart Repository
-    participant DB as Database
-    
+    participant Service as Order Service
+    participant ProdRepo as Product Repository
+    participant OrderRepo as Order Repository
+    participant CartRepo as Cart Repository
+
     User->>API: 주문 생성 요청
+    activate API
     
-    API->>OrderService: 주문 처리
-    activate OrderService
+    API->>Service: 주문 생성 트랜잭션 시작
+    activate Service
     
-    OrderService->>ProductRepository: 재고 확인 및 차감
-    activate ProductRepository
-    ProductRepository->>DB: 재고 조회 (FOR UPDATE)
+    Service->>ProdRepo: 재고 차감 요청 
+   
+    ProdRepo-->>Service: 성공 여부 반환
     
     alt 재고 부족
-        DB-->>ProductRepository: 부족
-        ProductRepository-->>OrderService: 재고 부족 예외
-        OrderService-->>API: 실패
-        API-->>User: 실패
-    else 재고 충분
-        ProductRepository->>DB: 재고 차감 (version++)
-        DB-->>ProductRepository: 성공
-        deactivate ProductRepository
+        Service-->>API: 재고 부족 예외 던짐
+        API-->>User: 400 Bad Request (품절)
+    else 재고 충분 및 차감 완료
+        Service->>OrderRepo: 주문(Order) & 상세(OrderItems) 저장
+        OrderRepo-->>Service: 저장 완료
         
-        OrderService->>OrderRepository: 주문 저장
-        activate OrderRepository
-        OrderRepository->>DB: 주문 생성 (ORDERS)
-        OrderRepository->>DB: 주문 항목 저장 (ORDER_ITEMS, 스냅샷)
-        DB-->>OrderRepository: 성공
-        deactivate OrderRepository
+        Service->>CartRepo: 장바구니 데이터 삭제
+        CartRepo-->>Service: 삭제 완료
         
-        OrderService->>CartRepository: 장바구니 삭제
-        activate CartRepository
-        CartRepository->>DB: 장바구니 삭제
-        deactivate CartRepository
-        
-        deactivate OrderService
-        API-->>User: 성공
+        Service-->>API: 주문 성공 응답
+        deactivate Service
+        API-->>User: 201 Created (주문 완료)
     end
-# 주문상태 변경
-sequenceDiagram
-title 주문 상태 변경 (PENDING → CONFIRMED → CANCELLED)
+    deactivate API
+```
 
-    actor Admin as 관리자
-    actor User as 사용자
+
+
+# 주문상태 변경
+
+
+```mermaid
+sequenceDiagram
+title 주문 상태 변경 (관리자 승인 / 사용자 취소)
+
+    actor Actor as 관리자/사용자
     participant API as Order API
-    participant OrderService as Order Service
-    participant OrderRepository as Order Repository
-    participant ProductRepository as Product Repository
-    participant DB as Database
+    participant Service as Order Service
+    participant OrderRepo as Order Repository
+    participant ProdRepo as Product Repository
+
+    Actor->>API: 상태 변경 요청 (Approve / Cancel)
+    activate API
     
-    Note over API,DB: 관리자: 주문 확인
-    Admin->>API: 주문 확인 요청
+    API->>Service: 주문 상태 변경 처리
+    activate Service
     
-    API->>OrderService: 주문 확인 처리
-    activate OrderService
+    Service->>OrderRepo: 현재 주문 정보 조회
+    OrderRepo-->>Service: Order Entity 반환
     
-    OrderService->>OrderRepository: 주문 상태 조회
-    activate OrderRepository
-    OrderRepository->>DB: 주문 조회
-    
-    alt 이미 CONFIRMED
-        DB-->>OrderRepository: CONFIRMED
-        OrderRepository-->>OrderService: 이미 확인됨
-        deactivate OrderRepository
-        OrderService-->>API: 실패
-        API-->>Admin: 실패
-    else PENDING
-        DB-->>OrderRepository: PENDING
-        
-        OrderService->>OrderRepository: 상태 변경
-        activate OrderRepository
-        OrderRepository->>DB: CONFIRMED로 변경
-        deactivate OrderRepository
-        
-        deactivate OrderService
-        API-->>Admin: 성공
+    alt 상태가 PENDING이 아님
+        Service-->>API: 변경 불가 예외 (400)
+        API-->>Actor: 실패 (이미 처리된 주문입니다)
+    else 상태가 PENDING임
+        alt 관리자 승인 (Approve)
+            Service->>OrderRepo: 상태를 'CONFIRMED'로 업데이트
+        else 사용자 취소 (Cancel)
+            Service->>ProdRepo: 재고 복구 (stock + n)
+            Service->>OrderRepo: 상태를 'CANCELLED'로 업데이트
+        end
+        Service-->>API: 성공 응답
+        deactivate Service
+        API-->>Actor: 200 OK (처리 완료)
     end
-    
-    Note over API,DB: 사용자: 주문 취소
-    User->>API: 주문 취소 요청
-    
-    API->>OrderService: 주문 취소 처리
-    activate OrderService
-    
-    OrderService->>OrderRepository: 주문 상태 조회
-    activate OrderRepository
-    OrderRepository->>DB: 주문 조회
-    
-    alt CONFIRMED 상태
-        DB-->>OrderRepository: CONFIRMED
-        OrderRepository-->>OrderService: 취소 불가
-        deactivate OrderRepository
-        OrderService-->>API: 실패
-        API-->>User: 실패
-    else PENDING
-        DB-->>OrderRepository: PENDING
-        
-        OrderService->>ProductRepository: 재고 복구
-        activate ProductRepository
-        ProductRepository->>DB: 재고 복구
-        deactivate ProductRepository
-        
-        OrderService->>OrderRepository: 상태 변경
-        activate OrderRepository
-        OrderRepository->>DB: CANCELLED로 변경
-        deactivate OrderRepository
-        
-        deactivate OrderService
-        API-->>User: 성공
-    end
+    deactivate API
+```

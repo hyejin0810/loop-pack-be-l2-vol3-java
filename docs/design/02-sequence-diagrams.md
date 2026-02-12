@@ -64,24 +64,24 @@ title 주문 생성 (재고 차감 및 장바구니 삭제)
 
     User->>API: 주문 생성 요청
     activate API
-    
+
     API->>Service: 주문 생성 트랜잭션 시작
     activate Service
-    
-    Service->>ProdRepo: 재고 차감 요청 
-   
+
+    Service->>ProdRepo: 재고 차감 요청
+
     ProdRepo-->>Service: 성공 여부 반환
-    
+
     alt 재고 부족
         Service-->>API: 재고 부족 예외 던짐
         API-->>User: 400 Bad Request (품절)
     else 재고 충분 및 차감 완료
         Service->>OrderRepo: 주문(Order) & 상세(OrderItems) 저장
         OrderRepo-->>Service: 저장 완료
-        
+
         Service->>CartRepo: 장바구니 데이터 삭제
         CartRepo-->>Service: 삭제 완료
-        
+
         Service-->>API: 주문 성공 응답
         deactivate Service
         API-->>User: 201 Created (주문 완료)

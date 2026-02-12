@@ -95,37 +95,40 @@ title 주문 생성 (재고 차감 및 장바구니 삭제)
 
 
 ```mermaid
-sequenceDiagram
-title 주문 상태 변경 (관리자 승인 / 사용자 취소)
+  
+  sequenceDiagram
+    title: 주문 상태 변경 (관리자 승인 / 사용자 취소)
 
-    actor Actor as 관리자/사용자
+    %% 참여자 정의 (별칭 사용)
+    participant U as 사용자/관리자
     participant API as Order API
-    participant Service as Order Service
-    participant OrderRepo as Order Repository
-    participant ProdRepo as Product Repository
+    participant S as Order Service
+    participant OR as Order Repository
+    participant PR as Product Repository
 
-    Actor->>API: 상태 변경 요청 (Approve / Cancel)
+    U->>API: 상태 변경 요청 (Approve/Cancel)
     activate API
     
-    API->>Service: 주문 상태 변경 처리
-    activate Service
+    API->>S: 주문 상태 변경 처리
+    activate S
     
-    Service->>OrderRepo: 현재 주문 정보 조회
-    OrderRepo-->>Service: Order Entity 반환
+    S->>OR: 현재 주문 정보 조회
+    OR-->>S: Order Entity 반환
     
-    alt 상태가 PENDING이 아님
-        Service-->>API: 변경 불가 예외 (400)
-        API-->>Actor: 실패 (이미 처리된 주문입니다)
-    else 상태가 PENDING임
+    alt 상태가 PENDING이 아닌 경우
+        S-->>API: 변경 불가 예외 (400)
+        API-->>U: 실패 (이미 처리된 주문입니다)
+    else 상태가 PENDING인 경우
         alt 관리자 승인 (Approve)
-            Service->>OrderRepo: 상태를 'CONFIRMED'로 업데이트
+            S->>OR: 상태를 'CONFIRMED'로 업데이트
         else 사용자 취소 (Cancel)
-            Service->>ProdRepo: 재고 복구 (stock + n)
-            Service->>OrderRepo: 상태를 'CANCELLED'로 업데이트
+            S->>PR: 재고 복구 (stock + n)
+            S->>OR: 상태를 'CANCELLED'로 업데이트
         end
-        Service-->>API: 성공 응답
-        deactivate Service
-        API-->>Actor: 200 OK (처리 완료)
+        S-->>API: 성공 응답
+        deactivate S
+        API-->>U: 200 OK (처리 완료)
     end
     deactivate API
+
 ```

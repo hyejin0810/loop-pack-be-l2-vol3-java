@@ -93,6 +93,7 @@ title 주문 생성 (재고 차감 및 장바구니 삭제)
 
 # 주문상태 변경
 
+
 ```mermaid
 sequenceDiagram
 title 주문 상태 변경 (관리자 승인 / 사용자 취소)

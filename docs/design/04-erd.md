@@ -66,7 +66,7 @@ erDiagram
     %% ========================================
     ORDERS {
         bigint id PK "자동증가"
-        varchar(50) order_number UK "주문번호 (중복불가, ORD-yyyyMMdd-xxxxx)"
+        varchar(50) order_number UK "주문번호 (UUID 기반, ORD-yyyyMMdd-{UUID 앞 8자리})"
         bigint user_id "주문자 ID (조회 최적화용 인덱스)"
         int total_amount "총 주문 금액"
         varchar(20) order_status "주문 상태 (PENDING/CONFIRMED/CANCELLED)"
@@ -88,23 +88,28 @@ erDiagram
     }
 
     %% ========================================
-    %% 논리적 관계 정의 (물리적 FK 제약조건 없음)
+    %% 관계 정의
+    %% [물리적 FK] ORDERS.user_id → USERS, ORDER_ITEMS.order_id → ORDERS
+    %%             트랜잭션 정합성 필수 구간 — DDL에 FK 제약조건 명시
+    %% [논리적 FK] 나머지 관계는 애플리케이션 레벨에서 검증
     %% ========================================
-    
-    %% 브랜드 → 상품
+
+    %% 브랜드 → 상품 (논리적 FK)
     BRANDS ||--o{ PRODUCTS : "보유"
-    
-    %% 사용자 → 좋아요/장바구니/주문
+
+    %% 사용자 → 좋아요/장바구니 (논리적 FK)
     USERS ||--o{ LIKES : "좋아요"
     USERS ||--o{ CART : "장바구니담기"
+
+    %% 사용자 → 주문 (물리적 FK)
     USERS ||--o{ ORDERS : "주문"
-    
-    %% 상품 → 좋아요/장바구니/주문항목
+
+    %% 상품 → 좋아요/장바구니/주문항목 (논리적 FK)
     PRODUCTS ||--o{ LIKES : "좋아요받음"
     PRODUCTS ||--o{ CART : "담김"
     PRODUCTS ||--o{ ORDER_ITEMS : "주문됨"
-    
-    %% 주문 → 주문항목
+
+    %% 주문 → 주문항목 (물리적 FK)
     ORDERS ||--|{ ORDER_ITEMS : "포함"
 
 ```

@@ -27,7 +27,8 @@ participant ProdRepo as Product Repository
         Repo-->>Service: 결과 반환
         alt 미존재
             Service->>Repo: INSERT (Like)
-            Service->>ProdRepo: UPDATE (likes_count + 1)
+            Service->>ProdRepo: UPDATE (likes_count + 1) — @Version 낙관적 락
+            Note right of Service: OptimisticLockException 발생 시 재시도
             Service-->>API: 성공
         else 이미 존재
             Service-->>API: 400 Bad Request
@@ -35,7 +36,7 @@ participant ProdRepo as Product Repository
     else 취소 요청
         Service->>Repo: DELETE (Like)
         Note right of Service: 삭제 성공 시에만 count 감소
-        Service->>ProdRepo: UPDATE (likes_count - 1)
+        Service->>ProdRepo: UPDATE (likes_count - 1) — @Version 낙관적 락
         Service-->>API: 성공
     end
     
@@ -68,6 +69,7 @@ title 주문 생성 (재고 차감 및 장바구니 삭제)
     API->>Service: 주문 생성 트랜잭션 시작
     activate Service
 
+    Service->>Service: generateOrderNumber() — UUID 기반 주문번호 생성
     Service->>ProdRepo: 재고 차감 요청
 
     ProdRepo-->>Service: 성공 여부 반환
@@ -122,6 +124,7 @@ title 주문 생성 (재고 차감 및 장바구니 삭제)
         alt 관리자 승인 (Approve)
             S->>OR: 상태를 'CONFIRMED'로 업데이트
         else 사용자 취소 (Cancel)
+            Note over S,PR: @Transactional — 재고 복구 + 상태 업데이트 원자적 처리
             S->>PR: 재고 복구 (stock + n)
             S->>OR: 상태를 'CANCELLED'로 업데이트
         end

@@ -65,7 +65,6 @@
 
 핵심 제약:
 - 동일 상품 중복 담기 시 수량 합산
-- 장바구니 최대 상품 개수: 100개
 
 
 [시나리오 4] 상품 주문
@@ -179,9 +178,12 @@
 - 좋아요는 중복 등록을 방지한다.
 - 삭제는 soft delete 정책을 따른다.
 - 모든 조회 API는 페이징을 지원한다.
-- 장바구니 최대 상품 개수: 100개
 - 비밀번호 암호화 알고리즘: BCrypt
 - 인증 방식: 헤더 기반 인증 (X-Loopers-LoginId, X-Loopers-LoginPw)
+- likes_count 동시성: Product 엔티티의 @Version 낙관적 락으로 동시 갱신 충돌을 방지한다.
+- 주문번호 생성: UUID 기반 (ORD-yyyyMMdd-{UUID 앞 8자리})으로 중복을 방지한다.
+- 주문 취소 시 재고 복구와 상태 업데이트는 단일 @Transactional 범위에서 원자적으로 처리한다.
+- ORDERS → USERS, ORDER_ITEMS → ORDERS 관계는 물리적 FK 제약조건으로 참조 무결성을 보장한다.
 
 
 

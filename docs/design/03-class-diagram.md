@@ -56,6 +56,7 @@ classDiagram
         +updateQuantity(quantity) void
     }
 
+
     class Order {
         <<Entity>>
         +Long id
@@ -110,6 +111,12 @@ classDiagram
         +removeLike(userId, productId) void
     }
 
+    class CartService {
+        <<Service>>
+        +addItem(userId, productId, quantity) void
+        +removeByUser(userId) void
+    }
+
     class OrderService {
         <<Service>>
         +createOrder(userId, items) Order
@@ -117,12 +124,25 @@ classDiagram
         +cancelOrder(orderNumber) void
         +getOrders(userId, pageable) Page~Order~
         +getOrderDetail(orderId) Order
+        +generateOrderNumber() String
     }
 
-    LikeService --> Product : likesCount 증감
+    %% ============================================
+    %% Facade 정의
+    %% ============================================
+
+    class OrderFacade {
+        <<Facade>>
+        +createOrder(userId, items) Order
+        +cancelOrder(orderNumber) void
+    }
+
+    LikeService --> Product : likesCount 증감 (@Version 낙관적 락)
+    OrderFacade --> OrderService : 주문 처리 위임
+    OrderFacade --> CartService : 장바구니 삭제 위임
     OrderService --> Product : 재고 차감/복구
-    OrderService --> Cart : 주문 시 장바구니 삭제
     OrderService --> OrderItem : 스냅샷 저장
+    CartService --> Cart : 장바구니 관리
 
 ```
 

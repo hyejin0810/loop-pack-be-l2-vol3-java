@@ -194,4 +194,61 @@ class UserServiceTest {
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
+
+    @DisplayName("인증")
+    @Nested
+    class Authenticate {
+
+        @DisplayName("loginId와 비밀번호가 일치하면, User를 반환한다.")
+        @Test
+        void returnsUser_whenCredentialsMatch() {
+            // Arrange
+            String loginId = "testuser";
+            String rawPassword = "Test1234!";
+            User user = new User(loginId, "encrypted", "홍길동", "19900101", "test@example.com");
+
+            when(userRepository.findByLoginId(loginId)).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches(rawPassword, "encrypted")).thenReturn(true);
+
+            // Act
+            User result = userService.authenticate(loginId, rawPassword);
+
+            // Assert
+            assertThat(result.getLoginId()).isEqualTo(loginId);
+        }
+
+        @DisplayName("존재하지 않는 loginId이면, NOT_FOUND 예외가 발생한다.")
+        @Test
+        void throwsNotFound_whenLoginIdDoesNotExist() {
+            // Arrange
+            when(userRepository.findByLoginId("nouser")).thenReturn(Optional.empty());
+
+            // Act
+            CoreException exception = assertThrows(CoreException.class, () ->
+                userService.authenticate("nouser", "Test1234!")
+            );
+
+            // Assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+        }
+
+        @DisplayName("비밀번호가 틀리면, BAD_REQUEST 예외가 발생한다.")
+        @Test
+        void throwsBadRequest_whenPasswordIsWrong() {
+            // Arrange
+            String loginId = "testuser";
+            User user = new User(loginId, "encrypted", "홍길동", "19900101", "test@example.com");
+
+            when(userRepository.findByLoginId(loginId)).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("wrongpw1!", "encrypted")).thenReturn(false);
+
+            // Act
+            CoreException exception = assertThrows(CoreException.class, () ->
+                userService.authenticate(loginId, "wrongpw1!")
+            );
+
+            // Assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+    }
 }

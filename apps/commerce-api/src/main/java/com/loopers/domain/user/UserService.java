@@ -30,6 +30,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserInfo getMyInfo(String loginId, String rawPassword) {
+        User user = authenticate(loginId, rawPassword);
+        return UserInfo.fromWithMaskedName(user);
+    }
+
+    @Transactional(readOnly = true)
+    public User authenticate(String loginId, String rawPassword) {
         User user = userRepository.findByLoginId(loginId)
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "회원을 찾을 수 없습니다."));
 
@@ -37,6 +43,6 @@ public class UserService {
             throw new CoreException(ErrorType.BAD_REQUEST, "비밀번호가 일치하지 않습니다.");
         }
 
-        return UserInfo.fromWithMaskedName(user);
+        return user;
     }
 }

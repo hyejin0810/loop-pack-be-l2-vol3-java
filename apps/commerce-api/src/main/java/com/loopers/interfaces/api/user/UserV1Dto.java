@@ -7,9 +7,9 @@ public class UserV1Dto {
     public record SignUpRequest(String loginId, String password, String name, String birthday, String email) {
     }
 
-    public record UserResponse(String loginId, String name, String birthday, String email) {
+    public record UserResponse(String loginId, String name, String birthday, String email, Long balance) {
         public static UserResponse from(UserInfo info) {
-            return new UserResponse(info.loginId(), info.name(), info.birthday(), info.email());
+            return new UserResponse(info.loginId(), info.name(), info.birthday(), info.email(), info.balance());
         }
     }
 }

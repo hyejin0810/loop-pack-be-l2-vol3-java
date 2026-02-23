@@ -101,7 +101,7 @@ class UserV1ControllerStandaloneTest {
         void returns200WithMaskedUserInfo() throws Exception {
             // Arrange
             when(userService.getMyInfo("testuser", "password1!"))
-                .thenReturn(new UserInfo("testuser", "홍길*", "19900101", "test@example.com"));
+                .thenReturn(new UserInfo("testuser", "홍길*", "19900101", "test@example.com", 0L));
 
             // Act
             String json = mockMvc.perform(get("/api/v1/users/me")

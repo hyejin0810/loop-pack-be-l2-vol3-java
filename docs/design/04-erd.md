@@ -10,6 +10,7 @@ erDiagram
         varchar(100) name "사용자 이름"
         varchar(255) email "이메일"
         varchar(20) phone "연락처"
+        bigint balance "잔액 (0 이상)"
         timestamp created_at "가입일시"
         timestamp updated_at "수정일시"
         timestamp deleted_at "삭제일시 (soft delete)"
@@ -43,22 +44,13 @@ erDiagram
     }
 
     %% ========================================
-    %% 좋아요 / 장바구니
+    %% 좋아요
     %% ========================================
     LIKES {
         bigint id PK "자동증가"
         bigint user_id UK "사용자 ID (user_id+product_id 복합 중복불가)"
         bigint product_id UK "상품 ID (user_id+product_id 복합 중복불가)"
         timestamp created_at "좋아요 등록일시"
-    }
-
-    CART {
-        bigint id PK "자동증가"
-        bigint user_id UK "사용자 ID (user_id+product_id 복합 중복불가)"
-        bigint product_id UK "상품 ID (user_id+product_id 복합 중복불가)"
-        int quantity "수량 (1 이상)"
-        timestamp created_at "장바구니 담은 일시"
-        timestamp updated_at "수량 수정일시"
     }
 
     %% ========================================
@@ -97,16 +89,14 @@ erDiagram
     %% 브랜드 → 상품 (논리적 FK)
     BRANDS ||--o{ PRODUCTS : "보유"
 
-    %% 사용자 → 좋아요/장바구니 (논리적 FK)
+    %% 사용자 → 좋아요 (논리적 FK)
     USERS ||--o{ LIKES : "좋아요"
-    USERS ||--o{ CART : "장바구니담기"
 
     %% 사용자 → 주문 (물리적 FK)
     USERS ||--o{ ORDERS : "주문"
 
-    %% 상품 → 좋아요/장바구니/주문항목 (논리적 FK)
+    %% 상품 → 좋아요/주문항목 (논리적 FK)
     PRODUCTS ||--o{ LIKES : "좋아요받음"
-    PRODUCTS ||--o{ CART : "담김"
     PRODUCTS ||--o{ ORDER_ITEMS : "주문됨"
 
     %% 주문 → 주문항목 (물리적 FK)

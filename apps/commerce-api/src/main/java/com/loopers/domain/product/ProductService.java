@@ -27,6 +27,11 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public List<Product> getProductsByIds(List<Long> ids) {
+        return productRepository.findAllByIds(ids);
+    }
+
+    @Transactional(readOnly = true)
     public Page<Product> getProducts(Long brandId, Pageable pageable) {
         return productRepository.findProducts(brandId, pageable);
     }
@@ -44,5 +49,13 @@ public class ProductService {
         Product product = getProduct(id);
         product.delete();
         productRepository.save(product);
+    }
+
+    @Transactional
+    public void deleteProductsByBrandId(Long brandId) {
+        productRepository.findAllByBrandId(brandId).forEach(product -> {
+            product.delete();
+            productRepository.save(product);
+        });
     }
 }

@@ -6,6 +6,8 @@ public record OrderItemInfo(
     Long id,
     Long productId,
     String productName,
+    String brandName,
+    String imageUrl,
     Integer price,
     Integer quantity
 ) {
@@ -14,6 +16,8 @@ public record OrderItemInfo(
             item.getId(),
             item.getProductId(),
             item.getProductName(),
+            item.getBrandName(),
+            item.getImageUrl(),
             item.getPrice(),
             item.getQuantity()
         );

@@ -6,11 +6,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Component
 public class LikeService {
 
     private final LikeRepository likeRepository;
+
+    @Transactional(readOnly = true)
+    public List<Long> getLikedProductIds(Long userId) {
+        return likeRepository.findByUserId(userId).stream()
+            .map(Like::getProductId)
+            .toList();
+    }
 
     @Transactional
     public Like addLike(Long userId, Long productId) {

@@ -16,6 +16,9 @@ import org.springframework.data.domain.PageRequest;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -105,6 +108,79 @@ class ProductServiceTest {
 
             // Assert
             assertThat(result.getContent()).hasSize(1);
+        }
+    }
+
+    @DisplayName("상품 ID 목록 조회")
+    @Nested
+    class GetProductsByIds {
+
+        @DisplayName("ID 목록으로 조회하면, 해당 상품 목록을 반환한다.")
+        @Test
+        void returnsProducts_whenIdsExist() {
+            // Arrange
+            List<Long> ids = List.of(1L, 2L);
+            List<Product> products = List.of(
+                new Product(1L, "나이키 신발", 10000, 100, "설명", "url1"),
+                new Product(1L, "아디다스 티셔츠", 20000, 50, "설명", "url2")
+            );
+            given(productRepository.findAllByIds(ids)).willReturn(products);
+
+            // Act
+            List<Product> result = productService.getProductsByIds(ids);
+
+            // Assert
+            assertThat(result).hasSize(2);
+        }
+
+        @DisplayName("해당하는 상품이 없으면, 빈 목록을 반환한다.")
+        @Test
+        void returnsEmpty_whenNoProductsFound() {
+            // Arrange
+            List<Long> ids = List.of(999L);
+            given(productRepository.findAllByIds(ids)).willReturn(List.of());
+
+            // Act
+            List<Product> result = productService.getProductsByIds(ids);
+
+            // Assert
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @DisplayName("브랜드별 상품 일괄 삭제")
+    @Nested
+    class DeleteProductsByBrandId {
+
+        @DisplayName("브랜드에 속한 상품이 있으면, 모두 soft delete 된다.")
+        @Test
+        void softDeletesAllProducts_whenBrandHasProducts() {
+            // Arrange
+            Product product1 = new Product(1L, "나이키 신발", 10000, 100, "설명", "url1");
+            Product product2 = new Product(1L, "나이키 모자", 5000, 50, "설명", "url2");
+            given(productRepository.findAllByBrandId(1L)).willReturn(List.of(product1, product2));
+            given(productRepository.save(any(Product.class))).willAnswer(i -> i.getArgument(0));
+
+            // Act
+            productService.deleteProductsByBrandId(1L);
+
+            // Assert
+            assertThat(product1.getDeletedAt()).isNotNull();
+            assertThat(product2.getDeletedAt()).isNotNull();
+            verify(productRepository, times(2)).save(any(Product.class));
+        }
+
+        @DisplayName("브랜드에 속한 상품이 없으면, 아무것도 삭제하지 않는다.")
+        @Test
+        void doesNothing_whenBrandHasNoProducts() {
+            // Arrange
+            given(productRepository.findAllByBrandId(999L)).willReturn(List.of());
+
+            // Act
+            productService.deleteProductsByBrandId(999L);
+
+            // Assert
+            verify(productRepository, times(0)).save(any(Product.class));
         }
     }
 

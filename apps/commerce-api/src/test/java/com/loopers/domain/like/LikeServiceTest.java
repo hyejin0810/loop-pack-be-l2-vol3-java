@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +29,38 @@ class LikeServiceTest {
     @BeforeEach
     void setUp() {
         likeService = new LikeService(likeRepository);
+    }
+
+    @DisplayName("좋아요한 상품 ID 목록 조회")
+    @Nested
+    class GetLikedProductIds {
+
+        @DisplayName("좋아요 목록이 있으면, productId 목록을 반환한다.")
+        @Test
+        void returnsProductIds_whenLikesExist() {
+            // Arrange
+            given(likeRepository.findByUserId(1L))
+                .willReturn(List.of(new Like(1L, 2L), new Like(1L, 3L)));
+
+            // Act
+            List<Long> result = likeService.getLikedProductIds(1L);
+
+            // Assert
+            assertThat(result).containsExactly(2L, 3L);
+        }
+
+        @DisplayName("좋아요 목록이 없으면, 빈 목록을 반환한다.")
+        @Test
+        void returnsEmpty_whenNoLikesExist() {
+            // Arrange
+            given(likeRepository.findByUserId(1L)).willReturn(List.of());
+
+            // Act
+            List<Long> result = likeService.getLikedProductIds(1L);
+
+            // Assert
+            assertThat(result).isEmpty();
+        }
     }
 
     @DisplayName("좋아요 추가")

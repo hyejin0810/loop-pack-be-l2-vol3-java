@@ -20,6 +20,12 @@ public class OrderItem extends BaseEntity {
     @Column(name = "product_name", nullable = false, length = 200)
     private String productName;
 
+    @Column(name = "brand_name", length = 100)
+    private String brandName;
+
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @Column(name = "price", nullable = false)
     private Integer price;
 
@@ -28,10 +34,13 @@ public class OrderItem extends BaseEntity {
 
     protected OrderItem() {}
 
-    public OrderItem(Long orderId, Long productId, String productName, Integer price, Integer quantity) {
+    public OrderItem(Long orderId, Long productId, String productName, String brandName,
+                     String imageUrl, Integer price, Integer quantity) {
         this.orderId = orderId;
         this.productId = productId;
         this.productName = productName;
+        this.brandName = brandName;
+        this.imageUrl = imageUrl;
         this.price = price;
         this.quantity = quantity;
     }

@@ -2,6 +2,7 @@ package com.loopers.application.brand;
 
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ import java.util.List;
 public class BrandFacade {
 
     private final BrandService brandService;
+    private final ProductService productService;
 
     public BrandInfo register(String name, String description) {
         Brand brand = brandService.register(name, description);
@@ -19,8 +21,7 @@ public class BrandFacade {
     }
 
     public BrandInfo getBrand(Long id) {
-        Brand brand = brandService.getBrand(id);
-        return BrandInfo.from(brand);
+        return BrandInfo.from(brandService.getBrand(id));
     }
 
     public List<BrandInfo> getBrands() {
@@ -30,6 +31,7 @@ public class BrandFacade {
     }
 
     public void deleteBrand(Long id) {
+        productService.deleteProductsByBrandId(id);
         brandService.deleteBrand(id);
     }
 }

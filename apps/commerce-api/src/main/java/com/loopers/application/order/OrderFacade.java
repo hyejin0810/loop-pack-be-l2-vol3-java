@@ -1,5 +1,7 @@
 package com.loopers.application.order;
 
+import com.loopers.domain.brand.Brand;
+import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderService;
@@ -15,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
@@ -23,6 +27,7 @@ public class OrderFacade {
     private final OrderService orderService;
     private final ProductService productService;
     private final UserService userService;
+    private final BrandService brandService;
 
     @Transactional
     public OrderInfo createOrder(String loginId, String rawPassword,
@@ -40,14 +45,21 @@ public class OrderFacade {
 
         user.deductBalance(totalAmount);
 
+        // 주문 시점의 브랜드명을 스냅샷으로 저장하기 위해 브랜드 정보를 한 번에 조회 (N+1 방지)
+        List<Long> brandIds = products.stream().map(Product::getBrandId).distinct().toList();
+        Map<Long, Brand> brandMap = brandService.getBrandsByIds(brandIds).stream()
+            .collect(Collectors.toMap(Brand::getId, b -> b));
+
         String orderNumber = orderService.generateOrderNumber();
         Order order = orderService.createOrder(user.getId(), orderNumber, totalAmount);
 
+        // 상품명, 브랜드명, 이미지 URL, 단가를 스냅샷으로 저장 (이후 상품 정보 변경에도 주문 내역 보존)
         for (int i = 0; i < items.size(); i++) {
             Product product = products.get(i);
             OrderRequest.OrderItemRequest item = items.get(i);
+            Brand brand = brandMap.get(product.getBrandId());
             orderService.createOrderItem(order.getId(), product.getId(),
-                product.getName(), product.getPrice(), item.quantity());
+                product.getName(), brand.getName(), product.getImageUrl(), product.getPrice(), item.quantity());
         }
 
         List<OrderItem> orderItems = orderService.getOrderItems(order.getId());

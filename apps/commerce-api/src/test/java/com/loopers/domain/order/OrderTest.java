@@ -11,6 +11,25 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class OrderTest {
 
+    @DisplayName("주문 항목 생성")
+    @Nested
+    class CreateOrderItem {
+
+        @DisplayName("유효한 정보로 생성하면, 스냅샷 정보가 저장된다.")
+        @Test
+        void savesSnapshot_whenInputIsValid() {
+            // Act
+            OrderItem item = new OrderItem(1L, 2L, "나이키 신발", "나이키", "url", 10000, 3);
+
+            // Assert
+            assertThat(item.getProductName()).isEqualTo("나이키 신발");
+            assertThat(item.getBrandName()).isEqualTo("나이키");
+            assertThat(item.getImageUrl()).isEqualTo("url");
+            assertThat(item.getPrice()).isEqualTo(10000);
+            assertThat(item.getQuantity()).isEqualTo(3);
+        }
+    }
+
     @DisplayName("주문 생성")
     @Nested
     class Create {

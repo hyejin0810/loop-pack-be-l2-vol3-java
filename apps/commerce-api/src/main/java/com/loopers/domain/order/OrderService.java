@@ -24,8 +24,8 @@ public class OrderService {
 
     @Transactional
     public OrderItem createOrderItem(Long orderId, Long productId, String productName,
-                                     Integer price, Integer quantity) {
-        return orderItemRepository.save(new OrderItem(orderId, productId, productName, price, quantity));
+                                     String brandName, String imageUrl, Integer price, Integer quantity) {
+        return orderItemRepository.save(new OrderItem(orderId, productId, productName, brandName, imageUrl, price, quantity));
     }
 
     @Transactional(readOnly = true)

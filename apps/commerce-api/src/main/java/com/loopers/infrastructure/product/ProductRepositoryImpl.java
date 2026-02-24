@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -26,6 +27,16 @@ public class ProductRepositoryImpl implements ProductRepository {
             return productJpaRepository.findAllByBrandIdAndDeletedAtIsNull(brandId, pageable);
         }
         return productJpaRepository.findAllByDeletedAtIsNull(pageable);
+    }
+
+    @Override
+    public List<Product> findAllByBrandId(Long brandId) {
+        return productJpaRepository.findAllByBrandIdAndDeletedAtIsNull(brandId);
+    }
+
+    @Override
+    public List<Product> findAllByIds(List<Long> ids) {
+        return productJpaRepository.findAllByIdInAndDeletedAtIsNull(ids);
     }
 
     @Override

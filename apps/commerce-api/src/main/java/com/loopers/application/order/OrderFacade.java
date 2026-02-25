@@ -2,6 +2,8 @@ package com.loopers.application.order;
 
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderService;
@@ -87,6 +89,10 @@ public class OrderFacade {
     @Transactional
     public OrderInfo cancelOrder(String loginId, String rawPassword, Long orderId) {
         User user = userService.authenticate(loginId, rawPassword);
+        Order found = orderService.getOrder(orderId);
+        if (!found.getUserId().equals(user.getId())) {
+            throw new CoreException(ErrorType.NOT_FOUND, "주문을 찾을 수 없습니다.");
+        }
         Order order = orderService.cancelOrder(orderId);
 
         List<OrderItem> orderItems = orderService.getOrderItems(orderId);

@@ -5,6 +5,7 @@ import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class BrandFacade {
             .toList();
     }
 
+    @Transactional
     public void deleteBrand(Long id) {
         productService.deleteProductsByBrandId(id);
         brandService.deleteBrand(id);

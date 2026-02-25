@@ -16,15 +16,18 @@ public class BrandFacade {
     private final BrandService brandService;
     private final ProductService productService;
 
+    @Transactional
     public BrandInfo register(String name, String description) {
         Brand brand = brandService.register(name, description);
         return BrandInfo.from(brand);
     }
 
+    @Transactional(readOnly = true)
     public BrandInfo getBrand(Long id) {
         return BrandInfo.from(brandService.getBrand(id));
     }
 
+    @Transactional(readOnly = true)
     public List<BrandInfo> getBrands() {
         return brandService.getBrands().stream()
             .map(BrandInfo::from)

@@ -5,7 +5,6 @@ import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Component
@@ -14,7 +13,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional
     public User signUp(String loginId, String rawPassword, String name, String birthday, String email) {
         userRepository.findByLoginId(loginId).ifPresent(u -> {
             throw new CoreException(ErrorType.CONFLICT, "이미 가입된 로그인 ID입니다.");
@@ -27,7 +25,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
     public User authenticate(String loginId, String rawPassword) {
         User user = userRepository.findByLoginId(loginId)
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "회원을 찾을 수 없습니다."));

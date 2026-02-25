@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class ProductFacade {
     private final ProductService productService;
     private final BrandService brandService;
 
+    @Transactional
     public ProductInfo createProduct(Long brandId, String name, Integer price, Integer stock,
                                      String description, String imageUrl) {
         Brand brand = brandService.getBrand(brandId);
@@ -29,12 +31,14 @@ public class ProductFacade {
         return ProductInfo.from(product, brand);
     }
 
+    @Transactional(readOnly = true)
     public ProductInfo getProductDetail(Long id) {
         Product product = productService.getProduct(id);
         Brand brand = brandService.getBrand(product.getBrandId());
         return ProductInfo.from(product, brand);
     }
 
+    @Transactional(readOnly = true)
     public Page<ProductInfo> getProducts(Long brandId, String sort, Pageable pageable) {
         Pageable sortedPageable = PageRequest.of(
             pageable.getPageNumber(), pageable.getPageSize(), resolveSort(sort)
@@ -48,6 +52,7 @@ public class ProductFacade {
         return products.map(p -> ProductInfo.from(p, brandMap.get(p.getBrandId())));
     }
 
+    @Transactional
     public ProductInfo updateProduct(Long id, String name, Integer price, Integer stock,
                                      String description, String imageUrl) {
         Product product = productService.updateProduct(id, name, price, stock, description, imageUrl);
@@ -55,6 +60,7 @@ public class ProductFacade {
         return ProductInfo.from(product, brand);
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
         productService.deleteProduct(id);
     }

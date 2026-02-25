@@ -6,7 +6,6 @@ import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Component
@@ -15,7 +14,6 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional
     public Member register(String loginId, String rawPassword, String name, String birthday, String email) {
         Member.validateRawPassword(rawPassword, birthday);
         String encryptedPassword = passwordEncoder.encode(rawPassword);
@@ -27,19 +25,16 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-    @Transactional(readOnly = true)
     public Member getMember(String loginId) {
         return memberRepository.findByLoginId(loginId)
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "회원을 찾을 수 없습니다."));
     }
 
-    @Transactional(readOnly = true)
     public MemberInfo getMyInfo(String loginId, String rawPassword) {
         Member member = authenticate(loginId, rawPassword);
         return MemberInfo.fromWithMaskedName(member);
     }
 
-    @Transactional
     public void changePassword(String loginId, String rawCurrentPassword, String rawNewPassword) {
         Member member = authenticate(loginId, rawCurrentPassword);
 

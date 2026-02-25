@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.user;
 
+import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserV1Controller {
 
     private final UserService userService;
+    private final UserFacade userFacade;
 
     @PostMapping
     public ApiResponse<UserV1Dto.UserResponse> signUp(
@@ -39,7 +41,7 @@ public class UserV1Controller {
         @RequestHeader("X-Loopers-LoginId") String loginId,
         @RequestHeader("X-Loopers-LoginPw") String loginPw
     ) {
-        UserInfo info = userService.getMyInfo(loginId, loginPw);
+        UserInfo info = userFacade.getMyInfo(loginId, loginPw);
         return ApiResponse.success(UserV1Dto.UserResponse.from(info));
     }
 }

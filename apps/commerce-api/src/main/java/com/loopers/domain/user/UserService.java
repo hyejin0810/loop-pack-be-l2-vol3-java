@@ -1,6 +1,5 @@
 package com.loopers.domain.user;
 
-import com.loopers.application.user.UserInfo;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +25,6 @@ public class UserService {
         String encryptedPassword = passwordEncoder.encode(rawPassword);
         User user = new User(loginId, encryptedPassword, name, birthday, email);
         return userRepository.save(user);
-    }
-
-    @Transactional(readOnly = true)
-    public UserInfo getMyInfo(String loginId, String rawPassword) {
-        User user = authenticate(loginId, rawPassword);
-        return UserInfo.fromWithMaskedName(user);
     }
 
     @Transactional(readOnly = true)

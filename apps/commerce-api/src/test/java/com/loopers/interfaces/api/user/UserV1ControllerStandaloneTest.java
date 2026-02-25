@@ -2,6 +2,7 @@ package com.loopers.interfaces.api.user;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.domain.user.UserService;
 import com.loopers.interfaces.api.ApiControllerAdvice;
@@ -31,12 +32,14 @@ class UserV1ControllerStandaloneTest {
 
     private MockMvc mockMvc;
     private UserService userService;
+    private UserFacade userFacade;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
         userService = mock(UserService.class);
-        UserV1Controller controller = new UserV1Controller(userService);
+        userFacade = mock(UserFacade.class);
+        UserV1Controller controller = new UserV1Controller(userService, userFacade);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(new ApiControllerAdvice())
@@ -100,7 +103,7 @@ class UserV1ControllerStandaloneTest {
         @Test
         void returns200WithMaskedUserInfo() throws Exception {
             // Arrange
-            when(userService.getMyInfo("testuser", "password1!"))
+            when(userFacade.getMyInfo("testuser", "password1!"))
                 .thenReturn(new UserInfo("testuser", "홍길*", "19900101", "test@example.com", 0L));
 
             // Act
@@ -127,7 +130,7 @@ class UserV1ControllerStandaloneTest {
         @Test
         void returns404_whenUserNotFound() throws Exception {
             // Arrange
-            when(userService.getMyInfo("nouser", "password1!"))
+            when(userFacade.getMyInfo("nouser", "password1!"))
                 .thenThrow(new CoreException(ErrorType.NOT_FOUND, "회원을 찾을 수 없습니다."));
 
             // Act & Assert
@@ -141,7 +144,7 @@ class UserV1ControllerStandaloneTest {
         @Test
         void returns400_whenPasswordIsWrong() throws Exception {
             // Arrange
-            when(userService.getMyInfo("testuser", "wrongpw1!"))
+            when(userFacade.getMyInfo("testuser", "wrongpw1!"))
                 .thenThrow(new CoreException(ErrorType.BAD_REQUEST, "비밀번호가 일치하지 않습니다."));
 
             // Act & Assert

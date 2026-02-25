@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.loopers.application.user.UserInfo;
-
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -133,64 +131,6 @@ class UserServiceTest {
 
             // Assert
             assertThat(result.getLoginId()).isEqualTo("newuser");
-        }
-    }
-
-    @DisplayName("내정보 조회")
-    @Nested
-    class GetMyInfo {
-
-        @DisplayName("인증에 성공하면, 마스킹된 회원 정보를 반환한다.")
-        @Test
-        void returnsMaskedUserInfo_whenAuthenticated() {
-            // Arrange
-            String loginId = "testuser";
-            String rawPassword = "Test1234!";
-            User user = new User(loginId, "encrypted", "홍길동", "19900101", "test@example.com");
-
-            when(userRepository.findByLoginId(loginId)).thenReturn(Optional.of(user));
-            when(passwordEncoder.matches(rawPassword, "encrypted")).thenReturn(true);
-
-            // Act
-            UserInfo result = userService.getMyInfo(loginId, rawPassword);
-
-            // Assert
-            assertThat(result.loginId()).isEqualTo("testuser");
-            assertThat(result.name()).isEqualTo("홍길*");
-        }
-
-        @DisplayName("존재하지 않는 loginId이면, NOT_FOUND 예외가 발생한다.")
-        @Test
-        void throwsNotFound_whenLoginIdDoesNotExist() {
-            // Arrange
-            when(userRepository.findByLoginId("nouser")).thenReturn(Optional.empty());
-
-            // Act
-            CoreException exception = assertThrows(CoreException.class, () ->
-                userService.getMyInfo("nouser", "Test1234!")
-            );
-
-            // Assert
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
-        }
-
-        @DisplayName("비밀번호가 틀리면, BAD_REQUEST 예외가 발생한다.")
-        @Test
-        void throwsBadRequest_whenPasswordIsWrong() {
-            // Arrange
-            String loginId = "testuser";
-            User user = new User(loginId, "encrypted", "홍길동", "19900101", "test@example.com");
-
-            when(userRepository.findByLoginId(loginId)).thenReturn(Optional.of(user));
-            when(passwordEncoder.matches("wrongpw1!", "encrypted")).thenReturn(false);
-
-            // Act
-            CoreException exception = assertThrows(CoreException.class, () ->
-                userService.getMyInfo(loginId, "wrongpw1!")
-            );
-
-            // Assert
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
 

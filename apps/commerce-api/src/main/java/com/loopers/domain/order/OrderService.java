@@ -45,8 +45,7 @@ public class OrderService {
     }
 
     @Transactional
-    public Order cancelOrder(Long id) {
-        Order order = getOrder(id);
+    public Order cancelOrder(Order order) {
         order.cancel();
         return orderRepository.save(order);
     }

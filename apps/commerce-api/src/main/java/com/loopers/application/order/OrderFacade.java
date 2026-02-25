@@ -93,7 +93,7 @@ public class OrderFacade {
         if (!found.getUserId().equals(user.getId())) {
             throw new CoreException(ErrorType.NOT_FOUND, "주문을 찾을 수 없습니다.");
         }
-        Order order = orderService.cancelOrder(orderId);
+        Order order = orderService.cancelOrder(found);
 
         List<OrderItem> orderItems = orderService.getOrderItems(orderId);
         for (OrderItem item : orderItems) {

@@ -121,28 +121,13 @@ class OrderServiceTest {
         void cancelsOrder_whenStatusIsPending() {
             // Arrange
             Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
-            given(orderRepository.findById(1L)).willReturn(Optional.of(order));
             given(orderRepository.save(order)).willReturn(order);
 
             // Act
-            Order result = orderService.cancelOrder(1L);
+            Order result = orderService.cancelOrder(order);
 
             // Assert
             assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        }
-
-        @DisplayName("존재하지 않는 ID로 취소하면, NOT_FOUND 예외가 발생한다.")
-        @Test
-        void throwsNotFound_whenOrderDoesNotExist() {
-            // Arrange
-            given(orderRepository.findById(999L)).willReturn(Optional.empty());
-
-            // Act
-            CoreException exception = assertThrows(CoreException.class,
-                () -> orderService.cancelOrder(999L));
-
-            // Assert
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
         }
     }
 

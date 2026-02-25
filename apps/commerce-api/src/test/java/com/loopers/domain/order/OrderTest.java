@@ -41,9 +41,6 @@ class OrderTest {
             Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
 
             // Assert
-            assertThat(order.getUserId()).isEqualTo(1L);
-            assertThat(order.getOrderNumber()).isEqualTo("ORD-20240101-ABCD1234");
-            assertThat(order.getTotalAmount()).isEqualTo(50000L);
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
         }
 

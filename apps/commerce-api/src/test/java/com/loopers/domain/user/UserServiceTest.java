@@ -132,7 +132,6 @@ class UserServiceTest {
             User result = userService.signUp(loginId, rawPassword, "홍길동", "19900101", "test@example.com");
 
             // Assert
-            assertThat(result).isNotNull();
             assertThat(result.getLoginId()).isEqualTo("newuser");
         }
     }

@@ -3,6 +3,8 @@ package com.loopers.interfaces.api.like;
 import com.loopers.application.like.LikeFacade;
 import com.loopers.application.product.ProductInfo;
 import com.loopers.interfaces.api.ApiResponse;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +39,9 @@ public class LikeV1Controller {
         @RequestHeader("X-Loopers-LoginPw") String rawPassword,
         @RequestBody LikeV1Dto.AddLikeRequest request
     ) {
+        if (request == null || request.productId() == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "productId는 필수입니다.");
+        }
         likeFacade.addLike(loginId, rawPassword, request.productId());
         return ApiResponse.success(null);
     }

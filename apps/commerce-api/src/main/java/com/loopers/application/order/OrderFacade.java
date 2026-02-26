@@ -72,16 +72,26 @@ public class OrderFacade {
     public Page<OrderInfo> getOrders(String loginId, String rawPassword, Pageable pageable) {
         User user = userService.authenticate(loginId, rawPassword);
         Page<Order> orders = orderService.getOrders(user.getId(), pageable);
-        return orders.map(order -> {
-            List<OrderItem> items = orderService.getOrderItems(order.getId());
-            return OrderInfo.from(order, items.stream().map(OrderItemInfo::from).toList());
-        });
+
+        List<Long> orderIds = orders.stream().map(Order::getId).toList();
+        Map<Long, List<OrderItemInfo>> itemsByOrderId = orderService.getOrderItemsByOrderIds(orderIds).stream()
+            .collect(Collectors.groupingBy(
+                OrderItem::getOrderId,
+                Collectors.mapping(OrderItemInfo::from, Collectors.toList())
+            ));
+
+        return orders.map(order ->
+            OrderInfo.from(order, itemsByOrderId.getOrDefault(order.getId(), List.of()))
+        );
     }
 
     @Transactional(readOnly = true)
     public OrderInfo getOrderDetail(String loginId, String rawPassword, Long orderId) {
-        userService.authenticate(loginId, rawPassword);
+        User user = userService.authenticate(loginId, rawPassword);
         Order order = orderService.getOrder(orderId);
+        if (!order.getUserId().equals(user.getId())) {
+            throw new CoreException(ErrorType.NOT_FOUND, "주문을 찾을 수 없습니다.");
+        }
         List<OrderItem> items = orderService.getOrderItems(orderId);
         return OrderInfo.from(order, items.stream().map(OrderItemInfo::from).toList());
     }
@@ -107,7 +117,8 @@ public class OrderFacade {
     }
 
     @Transactional
-    public OrderInfo approveOrder(Long orderId) {
+    public OrderInfo approveOrder(String loginId, String rawPassword, Long orderId) {
+        userService.authenticate(loginId, rawPassword);
         Order order = orderService.approveOrder(orderId);
         List<OrderItem> items = orderService.getOrderItems(orderId);
         return OrderInfo.from(order, items.stream().map(OrderItemInfo::from).toList());

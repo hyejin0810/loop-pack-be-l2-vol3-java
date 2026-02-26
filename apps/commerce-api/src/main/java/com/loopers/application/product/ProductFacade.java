@@ -4,6 +4,8 @@ import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -49,7 +51,13 @@ public class ProductFacade {
         Map<Long, Brand> brandMap = brandService.getBrandsByIds(brandIds).stream()
             .collect(Collectors.toMap(Brand::getId, b -> b));
 
-        return products.map(p -> ProductInfo.from(p, brandMap.get(p.getBrandId())));
+        return products.map(p -> {
+            Brand brand = brandMap.get(p.getBrandId());
+            if (brand == null) {
+                throw new CoreException(ErrorType.NOT_FOUND, "브랜드를 찾을 수 없습니다.");
+            }
+            return ProductInfo.from(p, brand);
+        });
     }
 
     @Transactional

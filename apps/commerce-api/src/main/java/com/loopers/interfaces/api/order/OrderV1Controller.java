@@ -66,9 +66,11 @@ public class OrderV1Controller {
 
     @PatchMapping("/{orderId}/approve")
     public ApiResponse<OrderV1Dto.OrderResponse> approveOrder(
+        @RequestHeader("X-Loopers-LoginId") String loginId,
+        @RequestHeader("X-Loopers-LoginPw") String rawPassword,
         @PathVariable Long orderId
     ) {
-        OrderInfo info = orderFacade.approveOrder(orderId);
+        OrderInfo info = orderFacade.approveOrder(loginId, rawPassword, orderId);
         return ApiResponse.success(OrderV1Dto.OrderResponse.from(info));
     }
 }

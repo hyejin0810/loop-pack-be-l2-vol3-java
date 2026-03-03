@@ -18,8 +18,13 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
 
     @Transactional
-    public Order createOrder(Long userId, String orderNumber, Long totalAmount) {
-        return orderRepository.save(new Order(userId, orderNumber, totalAmount));
+    public Order createOrder(Long userId, String orderNumber, Long originalAmount) {
+        return orderRepository.save(new Order(userId, orderNumber, originalAmount));
+    }
+
+    @Transactional
+    public Order createOrder(Long userId, String orderNumber, Long originalAmount, Long discountAmount, Long issuedCouponId) {
+        return orderRepository.save(new Order(userId, orderNumber, originalAmount, discountAmount, issuedCouponId));
     }
 
     @Transactional
@@ -42,6 +47,11 @@ public class OrderService {
     @Transactional(readOnly = true)
     public List<OrderItem> getOrderItems(Long orderId) {
         return orderItemRepository.findByOrderId(orderId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderItem> getOrderItemsByOrderIds(List<Long> orderIds) {
+        return orderItemRepository.findByOrderIds(orderIds);
     }
 
     @Transactional

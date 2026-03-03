@@ -19,6 +19,11 @@ public class OrderItemRepositoryImpl implements OrderItemRepository {
     }
 
     @Override
+    public List<OrderItem> findByOrderIds(List<Long> orderIds) {
+        return orderItemJpaRepository.findByOrderIdIn(orderIds);
+    }
+
+    @Override
     public OrderItem save(OrderItem orderItem) {
         return orderItemJpaRepository.save(orderItem);
     }

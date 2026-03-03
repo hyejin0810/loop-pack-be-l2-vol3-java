@@ -10,7 +10,8 @@ import java.util.List;
 public class OrderV1Dto {
 
     public record CreateOrderRequest(
-        List<OrderItemRequest> items
+        List<OrderItemRequest> items,
+        Long couponId
     ) {
         public record OrderItemRequest(
             Long productId,
@@ -47,7 +48,10 @@ public class OrderV1Dto {
         Long userId,
         String orderNumber,
         OrderStatus status,
+        Long originalAmount,
+        Long discountAmount,
         Long totalAmount,
+        Long issuedCouponId,
         List<OrderItemResponse> items
     ) {
         public static OrderResponse from(OrderInfo info) {
@@ -56,7 +60,10 @@ public class OrderV1Dto {
                 info.userId(),
                 info.orderNumber(),
                 info.status(),
+                info.originalAmount(),
+                info.discountAmount(),
                 info.totalAmount(),
+                info.issuedCouponId(),
                 info.items().stream().map(OrderItemResponse::from).toList()
             );
         }

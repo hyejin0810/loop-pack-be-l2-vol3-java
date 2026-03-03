@@ -2,6 +2,10 @@ package com.loopers.application.order;
 
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.coupon.CouponTemplate;
+import com.loopers.domain.coupon.CouponTemplateRepository;
+import com.loopers.domain.coupon.IssuedCoupon;
+import com.loopers.domain.coupon.IssuedCouponRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.domain.order.Order;
@@ -17,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,22 +35,47 @@ public class OrderFacade {
     private final ProductService productService;
     private final UserService userService;
     private final BrandService brandService;
+    private final CouponTemplateRepository couponTemplateRepository;
+    private final IssuedCouponRepository issuedCouponRepository;
 
     @Transactional
     public OrderInfo createOrder(String loginId, String rawPassword,
-                                 List<OrderRequest.OrderItemRequest> items) {
+                                 List<OrderRequest.OrderItemRequest> items, Long issuedCouponId) {
         User user = userService.authenticate(loginId, rawPassword);
 
         List<Product> products = new ArrayList<>();
-        long totalAmount = 0L;
+        long originalAmount = 0L;
         for (OrderRequest.OrderItemRequest item : items) {
             Product product = productService.getProduct(item.productId());
             product.decreaseStock(item.quantity());
-            totalAmount += (long) product.getPrice() * item.quantity();
+            originalAmount += (long) product.getPrice() * item.quantity();
             products.add(product);
         }
 
-        user.deductBalance(totalAmount);
+        // 쿠폰 적용
+        long discountAmount = 0L;
+        IssuedCoupon issuedCoupon = null;
+        if (issuedCouponId != null) {
+            issuedCoupon = issuedCouponRepository.findById(issuedCouponId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 찾을 수 없습니다."));
+
+            if (!issuedCoupon.getUserId().equals(user.getId())) {
+                throw new CoreException(ErrorType.BAD_REQUEST, "본인 소유의 쿠폰이 아닙니다.");
+            }
+
+            CouponTemplate template = couponTemplateRepository.findById(issuedCoupon.getCouponTemplateId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰 템플릿을 찾을 수 없습니다."));
+
+            if (template.getExpiredAt().isBefore(ZonedDateTime.now())) {
+                throw new CoreException(ErrorType.BAD_REQUEST, "만료된 쿠폰입니다.");
+            }
+
+            discountAmount = template.calculateDiscount(originalAmount);
+            issuedCoupon.use();
+        }
+
+        long finalAmount = originalAmount - discountAmount;
+        user.deductBalance(finalAmount);
 
         // 주문 시점의 브랜드명을 스냅샷으로 저장하기 위해 브랜드 정보를 한 번에 조회 (N+1 방지)
         List<Long> brandIds = products.stream().map(Product::getBrandId).distinct().toList();
@@ -53,7 +83,9 @@ public class OrderFacade {
             .collect(Collectors.toMap(Brand::getId, b -> b));
 
         String orderNumber = orderService.generateOrderNumber();
-        Order order = orderService.createOrder(user.getId(), orderNumber, totalAmount);
+        Order order = issuedCoupon != null
+            ? orderService.createOrder(user.getId(), orderNumber, originalAmount, discountAmount, issuedCoupon.getId())
+            : orderService.createOrder(user.getId(), orderNumber, originalAmount);
 
         // 상품명, 브랜드명, 이미지 URL, 단가를 스냅샷으로 저장 (이후 상품 정보 변경에도 주문 내역 보존)
         for (int i = 0; i < items.size(); i++) {

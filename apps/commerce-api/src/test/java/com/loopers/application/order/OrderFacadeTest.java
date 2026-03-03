@@ -1,6 +1,8 @@
 package com.loopers.application.order;
 
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.coupon.CouponTemplateRepository;
+import com.loopers.domain.coupon.IssuedCouponRepository;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.product.ProductService;
@@ -37,11 +39,17 @@ class OrderFacadeTest {
     @Mock
     private BrandService brandService;
 
+    @Mock
+    private CouponTemplateRepository couponTemplateRepository;
+
+    @Mock
+    private IssuedCouponRepository issuedCouponRepository;
+
     private OrderFacade orderFacade;
 
     @BeforeEach
     void setUp() {
-        orderFacade = new OrderFacade(orderService, productService, userService, brandService);
+        orderFacade = new OrderFacade(orderService, productService, userService, brandService, couponTemplateRepository, issuedCouponRepository);
     }
 
     @DisplayName("주문 상세 조회")

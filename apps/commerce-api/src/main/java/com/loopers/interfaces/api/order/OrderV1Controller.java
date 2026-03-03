@@ -30,7 +30,7 @@ public class OrderV1Controller {
         @RequestHeader("X-Loopers-LoginPw") String rawPassword,
         @RequestBody OrderV1Dto.CreateOrderRequest request
     ) {
-        OrderInfo info = orderFacade.createOrder(loginId, rawPassword, request.toOrderItemRequests());
+        OrderInfo info = orderFacade.createOrder(loginId, rawPassword, request.toOrderItemRequests(), request.couponId());
         return ApiResponse.success(OrderV1Dto.OrderResponse.from(info));
     }
 

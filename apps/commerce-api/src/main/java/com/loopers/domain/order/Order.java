@@ -25,18 +25,43 @@ public class Order extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private OrderStatus status;
 
+    @Column(name = "original_amount", nullable = false)
+    private Long originalAmount;
+
+    @Column(name = "discount_amount", nullable = false)
+    private Long discountAmount;
+
     @Column(name = "total_amount", nullable = false)
     private Long totalAmount;
 
+    @Column(name = "issued_coupon_id")
+    private Long issuedCouponId;
+
     protected Order() {}
 
-    public Order(Long userId, String orderNumber, Long totalAmount) {
-        if (totalAmount == null || totalAmount <= 0) {
+    public Order(Long userId, String orderNumber, Long originalAmount) {
+        if (originalAmount == null || originalAmount <= 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "총 금액은 0보다 커야 합니다.");
         }
         this.userId = userId;
         this.orderNumber = orderNumber;
-        this.totalAmount = totalAmount;
+        this.originalAmount = originalAmount;
+        this.discountAmount = 0L;
+        this.totalAmount = originalAmount;
+        this.issuedCouponId = null;
+        this.status = OrderStatus.PENDING;
+    }
+
+    public Order(Long userId, String orderNumber, Long originalAmount, Long discountAmount, Long issuedCouponId) {
+        if (originalAmount == null || originalAmount <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "총 금액은 0보다 커야 합니다.");
+        }
+        this.userId = userId;
+        this.orderNumber = orderNumber;
+        this.originalAmount = originalAmount;
+        this.discountAmount = discountAmount;
+        this.totalAmount = originalAmount - discountAmount;
+        this.issuedCouponId = issuedCouponId;
         this.status = OrderStatus.PENDING;
     }
 

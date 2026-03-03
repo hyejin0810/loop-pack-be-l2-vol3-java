@@ -58,6 +58,10 @@ public class CouponTemplate extends BaseEntity {
         this.expiredAt = expiredAt;
     }
 
+    public boolean isExpired() {
+        return this.expiredAt.isBefore(ZonedDateTime.now());
+    }
+
     public void update(String name, CouponType type, Integer value, Integer minOrderAmount, ZonedDateTime expiredAt) {
         if (name == null || name.isBlank()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "쿠폰 이름은 비어있을 수 없습니다.");

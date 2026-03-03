@@ -49,4 +49,11 @@ public class IssuedCoupon extends BaseEntity {
     public void expire() {
         this.status = IssuedCouponStatus.EXPIRED;
     }
+
+    public void restore() {
+        if (this.status != IssuedCouponStatus.USED) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "사용된 쿠폰만 복구할 수 있습니다.");
+        }
+        this.status = IssuedCouponStatus.AVAILABLE;
+    }
 }

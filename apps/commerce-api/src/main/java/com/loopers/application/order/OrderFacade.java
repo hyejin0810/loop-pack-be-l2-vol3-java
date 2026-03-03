@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,8 @@ public class OrderFacade {
             CouponTemplate template = couponTemplateRepository.findById(issuedCoupon.getCouponTemplateId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰 템플릿을 찾을 수 없습니다."));
 
-            if (template.getExpiredAt().isBefore(ZonedDateTime.now())) {
+            // 만료 여부는 CouponTemplate 엔티티가 판단 (도메인 규칙)
+            if (template.isExpired()) {
                 throw new CoreException(ErrorType.BAD_REQUEST, "만료된 쿠폰입니다.");
             }
 
@@ -144,6 +144,19 @@ public class OrderFacade {
         }
 
         user.restoreBalance(order.getTotalAmount());
+
+        // 쿠폰이 사용된 경우, 템플릿 만료 여부를 확인한 후 복구
+        // - 만료되지 않은 쿠폰: USED → AVAILABLE로 복구 (재사용 가능)
+        // - 만료된 쿠폰: 복구하지 않음 (어차피 사용 불가)
+        if (order.getIssuedCouponId() != null) {
+            IssuedCoupon issuedCoupon = issuedCouponRepository.findById(order.getIssuedCouponId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "발급된 쿠폰을 찾을 수 없습니다."));
+            CouponTemplate template = couponTemplateRepository.findById(issuedCoupon.getCouponTemplateId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰 템플릿을 찾을 수 없습니다."));
+            if (!template.isExpired()) {
+                issuedCoupon.restore();
+            }
+        }
 
         return OrderInfo.from(order, orderItems.stream().map(OrderItemInfo::from).toList());
     }

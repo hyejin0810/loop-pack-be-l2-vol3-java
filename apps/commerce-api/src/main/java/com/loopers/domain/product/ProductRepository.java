@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface ProductRepository {
     Optional<Product> findById(Long id);
+    Optional<Product> findByIdForUpdate(Long id);
     Page<Product> findProducts(Long brandId, Pageable pageable);
     List<Product> findAllByBrandId(Long brandId);
     List<Product> findAllByIds(List<Long> ids);

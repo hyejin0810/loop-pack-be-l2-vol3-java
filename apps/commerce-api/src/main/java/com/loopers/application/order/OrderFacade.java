@@ -45,7 +45,7 @@ public class OrderFacade {
         List<Product> products = new ArrayList<>();
         long originalAmount = 0L;
         for (OrderRequest.OrderItemRequest item : items) {
-            Product product = productService.getProduct(item.productId());
+            Product product = productService.getProductForUpdate(item.productId());
             product.decreaseStock(item.quantity());
             originalAmount += (long) product.getPrice() * item.quantity();
             products.add(product);
@@ -55,7 +55,7 @@ public class OrderFacade {
         long discountAmount = 0L;
         IssuedCoupon issuedCoupon = null;
         if (issuedCouponId != null) {
-            issuedCoupon = issuedCouponRepository.findById(issuedCouponId)
+            issuedCoupon = issuedCouponRepository.findByIdForUpdate(issuedCouponId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 찾을 수 없습니다."));
 
             if (!issuedCoupon.getUserId().equals(user.getId())) {
@@ -139,7 +139,7 @@ public class OrderFacade {
 
         List<OrderItem> orderItems = orderService.getOrderItems(orderId);
         for (OrderItem item : orderItems) {
-            Product product = productService.getProduct(item.getProductId());
+            Product product = productService.getProductForUpdate(item.getProductId());
             product.increaseStock(item.getQuantity());
         }
 

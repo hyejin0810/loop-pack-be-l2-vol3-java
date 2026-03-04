@@ -43,7 +43,7 @@ public class LikeFacade {
     @Transactional
     public void addLike(String loginId, String rawPassword, Long productId) {
         User user = userService.authenticate(loginId, rawPassword);
-        Product product = productService.getProduct(productId);
+        Product product = productService.getProductForUpdate(productId);
         likeService.addLike(user.getId(), productId);
         product.increaseLikes();
     }
@@ -51,7 +51,7 @@ public class LikeFacade {
     @Transactional
     public void removeLike(String loginId, String rawPassword, Long productId) {
         User user = userService.authenticate(loginId, rawPassword);
-        Product product = productService.getProduct(productId);
+        Product product = productService.getProductForUpdate(productId);
         likeService.removeLike(user.getId(), productId);
         product.decreaseLikes();
     }

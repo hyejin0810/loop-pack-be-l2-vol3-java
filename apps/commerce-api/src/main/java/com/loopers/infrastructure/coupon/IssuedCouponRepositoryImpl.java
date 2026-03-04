@@ -25,6 +25,11 @@ public class IssuedCouponRepositoryImpl implements IssuedCouponRepository {
     }
 
     @Override
+    public Optional<IssuedCoupon> findByIdForUpdate(Long id) {
+        return issuedCouponJpaRepository.findByIdForUpdateAndDeletedAtIsNull(id);
+    }
+
+    @Override
     public List<IssuedCoupon> findAllByUserId(Long userId) {
         return issuedCouponJpaRepository.findAllByUserIdAndDeletedAtIsNull(userId);
     }

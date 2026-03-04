@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 
 @Entity
@@ -20,6 +21,10 @@ public class IssuedCoupon extends BaseEntity {
 
     @Column(name = "coupon_template_id", nullable = false)
     private Long couponTemplateId;
+
+    @Version
+    @Column(name = "version")
+    private Integer version;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)

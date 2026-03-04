@@ -45,8 +45,8 @@ public class OrderFacade {
         List<Product> products = new ArrayList<>();
         long originalAmount = 0L;
         for (OrderRequest.OrderItemRequest item : items) {
-            Product product = productService.getProductForUpdate(item.productId());
-            product.decreaseStock(item.quantity());
+            Product product = productService.getProduct(item.productId());
+            productService.decrementStock(item.productId(), item.quantity());
             originalAmount += (long) product.getPrice() * item.quantity();
             products.add(product);
         }
@@ -139,8 +139,7 @@ public class OrderFacade {
 
         List<OrderItem> orderItems = orderService.getOrderItems(orderId);
         for (OrderItem item : orderItems) {
-            Product product = productService.getProductForUpdate(item.getProductId());
-            product.increaseStock(item.getQuantity());
+            productService.incrementStock(item.getProductId(), item.getQuantity());
         }
 
         user.restoreBalance(order.getTotalAmount());

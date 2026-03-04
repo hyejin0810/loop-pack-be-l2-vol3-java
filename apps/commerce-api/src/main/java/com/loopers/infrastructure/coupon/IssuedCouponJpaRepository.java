@@ -16,7 +16,7 @@ public interface IssuedCouponJpaRepository extends JpaRepository<IssuedCoupon, L
     boolean existsByUserIdAndCouponTemplateIdAndDeletedAtIsNull(Long userId, Long couponTemplateId);
     List<IssuedCoupon> findAllByCouponTemplateIdAndDeletedAtIsNull(Long couponTemplateId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT ic FROM IssuedCoupon ic WHERE ic.id = :id AND ic.deletedAt IS NULL")
     Optional<IssuedCoupon> findByIdForUpdateAndDeletedAtIsNull(@Param("id") Long id);
 }

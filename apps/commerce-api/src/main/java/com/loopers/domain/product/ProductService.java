@@ -28,12 +28,6 @@ public class ProductService {
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
     }
 
-    @Transactional
-    public Product getProductForUpdate(Long id) {
-        return productRepository.findByIdForUpdate(id)
-            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
-    }
-
     @Transactional(readOnly = true)
     public List<Product> getProductsByIds(List<Long> ids) {
         return productRepository.findAllByIds(ids);
@@ -65,5 +59,28 @@ public class ProductService {
             product.delete();
             productRepository.save(product);
         });
+    }
+
+    @Transactional
+    public void increaseLikesCount(Long id) {
+        productRepository.incrementLikesCount(id);
+    }
+
+    @Transactional
+    public void decreaseLikesCount(Long id) {
+        productRepository.decrementLikesCount(id);
+    }
+
+    @Transactional
+    public void decrementStock(Long id, int quantity) {
+        int updated = productRepository.decrementStock(id, quantity);
+        if (updated == 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "재고가 부족합니다.");
+        }
+    }
+
+    @Transactional
+    public void incrementStock(Long id, int quantity) {
+        productRepository.incrementStock(id, quantity);
     }
 }

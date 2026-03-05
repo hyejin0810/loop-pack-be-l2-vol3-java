@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,9 +43,14 @@ public class OrderFacade {
                                  List<OrderRequest.OrderItemRequest> items, Long issuedCouponId) {
         User user = userService.authenticate(loginId, rawPassword);
 
+        // 데드락 방지: 상품 ID 오름차순으로 정렬하여 락 획득 순서를 일관되게 보장
+        List<OrderRequest.OrderItemRequest> sortedItems = items.stream()
+            .sorted(Comparator.comparingLong(OrderRequest.OrderItemRequest::productId))
+            .toList();
+
         List<Product> products = new ArrayList<>();
         long originalAmount = 0L;
-        for (OrderRequest.OrderItemRequest item : items) {
+        for (OrderRequest.OrderItemRequest item : sortedItems) {
             Product product = productService.getProduct(item.productId());
             productService.decrementStock(item.productId(), item.quantity());
             originalAmount += (long) product.getPrice() * item.quantity();
@@ -137,7 +143,10 @@ public class OrderFacade {
         }
         Order order = orderService.cancelOrder(found);
 
-        List<OrderItem> orderItems = orderService.getOrderItems(orderId);
+        // 데드락 방지: 상품 ID 오름차순으로 정렬하여 락 획득 순서를 일관되게 보장
+        List<OrderItem> orderItems = orderService.getOrderItems(orderId).stream()
+            .sorted(Comparator.comparingLong(OrderItem::getProductId))
+            .toList();
         for (OrderItem item : orderItems) {
             productService.incrementStock(item.getProductId(), item.getQuantity());
         }

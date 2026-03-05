@@ -21,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import ObjectOptimisticLockingFailureException;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -77,7 +79,11 @@ public class OrderFacade {
             }
 
             discountAmount = template.calculateDiscount(originalAmount);
-            issuedCoupon.use();
+            try {
+                issuedCoupon.use();
+            } catch (ObjectOptimisticLockingFailureException e) {
+                throw new CoreException(ErrorType.CONFLICT, "이미 사용된 쿠폰입니다.");
+            }
         }
 
         long finalAmount = originalAmount - discountAmount;
@@ -162,7 +168,11 @@ public class OrderFacade {
             CouponTemplate template = couponTemplateRepository.findById(issuedCoupon.getCouponTemplateId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰 템플릿을 찾을 수 없습니다."));
             if (!template.isExpired()) {
-                issuedCoupon.restore();
+                try {
+                    issuedCoupon.restore();
+                } catch (ObjectOptimisticLockingFailureException e) {
+                    throw new CoreException(ErrorType.CONFLICT, "쿠폰 복구 중 충돌이 발생했습니다. 다시 시도해주세요.");
+                }
             }
         }
 

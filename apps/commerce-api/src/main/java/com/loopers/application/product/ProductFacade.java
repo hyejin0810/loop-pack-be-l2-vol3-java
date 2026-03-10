@@ -4,6 +4,7 @@ import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
+import com.loopers.infrastructure.product.ProductCacheService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class ProductFacade {
 
     private final ProductService productService;
     private final BrandService brandService;
+    private final ProductCacheService productCacheService;
 
     @Transactional
     public ProductInfo createProduct(Long brandId, String name, Integer price, Integer stock,
@@ -35,9 +37,16 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public ProductInfo getProductDetail(Long id) {
-        Product product = productService.getProduct(id);
-        Brand brand = brandService.getBrand(product.getBrandId());
-        return ProductInfo.from(product, brand);
+        // 1. 캐시 조회
+        return productCacheService.get(id).orElseGet(() -> {
+            // 2. Cache Miss → DB 조회
+            Product product = productService.getProduct(id);
+            Brand brand = brandService.getBrand(product.getBrandId());
+            ProductInfo productInfo = ProductInfo.from(product, brand);
+            // 3. 캐시 저장
+            productCacheService.set(productInfo);
+            return productInfo;
+        });
     }
 
     @Transactional(readOnly = true)
@@ -65,12 +74,14 @@ public class ProductFacade {
                                      String description, String imageUrl) {
         Product product = productService.updateProduct(id, name, price, stock, description, imageUrl);
         Brand brand = brandService.getBrand(product.getBrandId());
+        productCacheService.delete(id);
         return ProductInfo.from(product, brand);
     }
 
     @Transactional
     public void deleteProduct(Long id) {
         productService.deleteProduct(id);
+        productCacheService.delete(id);
     }
 
     private Sort resolveSort(String sort) {

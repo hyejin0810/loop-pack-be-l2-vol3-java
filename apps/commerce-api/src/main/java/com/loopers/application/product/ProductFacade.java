@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -32,6 +33,7 @@ public class ProductFacade {
                                      String description, String imageUrl) {
         Brand brand = brandService.getBrand(brandId);
         Product product = productService.createProduct(brandId, name, price, stock, description, imageUrl);
+        productCacheService.deleteListAll();
         return ProductInfo.from(product, brand);
     }
 
@@ -51,6 +53,15 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public Page<ProductInfo> getProducts(Long brandId, String sort, Pageable pageable) {
+        // 1. 캐시 조회
+        Optional<Page<ProductInfo>> cached = productCacheService.getList(
+            brandId, sort, pageable.getPageNumber(), pageable.getPageSize()
+        );
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+
+        // 2. Cache Miss → DB 조회
         Pageable sortedPageable = PageRequest.of(
             pageable.getPageNumber(), pageable.getPageSize(), resolveSort(sort)
         );
@@ -60,13 +71,17 @@ public class ProductFacade {
         Map<Long, Brand> brandMap = brandService.getBrandsByIds(brandIds).stream()
             .collect(Collectors.toMap(Brand::getId, b -> b));
 
-        return products.map(p -> {
+        Page<ProductInfo> result = products.map(p -> {
             Brand brand = brandMap.get(p.getBrandId());
             if (brand == null) {
                 throw new CoreException(ErrorType.NOT_FOUND, "브랜드를 찾을 수 없습니다.");
             }
             return ProductInfo.from(p, brand);
         });
+
+        // 3. 캐시 저장
+        productCacheService.setList(brandId, sort, result);
+        return result;
     }
 
     @Transactional
@@ -75,6 +90,7 @@ public class ProductFacade {
         Product product = productService.updateProduct(id, name, price, stock, description, imageUrl);
         Brand brand = brandService.getBrand(product.getBrandId());
         productCacheService.delete(id);
+        productCacheService.deleteListAll();
         return ProductInfo.from(product, brand);
     }
 
@@ -82,6 +98,7 @@ public class ProductFacade {
     public void deleteProduct(Long id) {
         productService.deleteProduct(id);
         productCacheService.delete(id);
+        productCacheService.deleteListAll();
     }
 
     private Sort resolveSort(String sort) {

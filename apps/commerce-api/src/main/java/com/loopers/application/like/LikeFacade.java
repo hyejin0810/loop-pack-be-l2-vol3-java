@@ -47,7 +47,8 @@ public class LikeFacade {
         User user = userService.authenticate(loginId, rawPassword);
         likeService.addLike(user.getId(), productId);
         productService.increaseLikesCount(productId);
-        productCacheService.delete(productId);  // likes_count 변경 → 캐시 무효화
+        productCacheService.delete(productId);      // likes_count 변경 → 상세 캐시 무효화
+        productCacheService.deleteListAll();         // likes_desc 정렬 순서 변경 → 목록 캐시 무효화
     }
 
     @Transactional
@@ -55,6 +56,7 @@ public class LikeFacade {
         User user = userService.authenticate(loginId, rawPassword);
         likeService.removeLike(user.getId(), productId);
         productService.decreaseLikesCount(productId);
-        productCacheService.delete(productId);  // likes_count 변경 → 캐시 무효화
+        productCacheService.delete(productId);      // likes_count 변경 → 상세 캐시 무효화
+        productCacheService.deleteListAll();         // likes_desc 정렬 순서 변경 → 목록 캐시 무효화
     }
 }

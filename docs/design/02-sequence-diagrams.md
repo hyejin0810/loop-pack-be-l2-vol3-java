@@ -27,7 +27,8 @@ participant ProdRepo as Product Repository
         Repo-->>Service: 결과 반환
         alt 미존재
             Service->>Repo: INSERT (Like)
-            Service->>ProdRepo: UPDATE (likes_count + 1)
+            Service->>ProdRepo: UPDATE (likes_count + 1) — @Version 낙관적 락
+            Note right of Service: OptimisticLockException 발생 시 재시도
             Service-->>API: 성공
         else 이미 존재
             Service-->>API: 400 Bad Request
@@ -35,7 +36,7 @@ participant ProdRepo as Product Repository
     else 취소 요청
         Service->>Repo: DELETE (Like)
         Note right of Service: 삭제 성공 시에만 count 감소
-        Service->>ProdRepo: UPDATE (likes_count - 1)
+        Service->>ProdRepo: UPDATE (likes_count - 1) — @Version 낙관적 락
         Service-->>API: 성공
     end
     
@@ -53,38 +54,44 @@ participant ProdRepo as Product Repository
 ```mermaid
 
 sequenceDiagram
-title 주문 생성 (재고 차감 및 장바구니 삭제)
+title 주문 생성 (재고 차감 및 잔액 차감)
 
     actor User as 사용자
     participant API as Order API
     participant Service as Order Service
+    participant UserRepo as User Repository
     participant ProdRepo as Product Repository
     participant OrderRepo as Order Repository
-    participant CartRepo as Cart Repository
 
-    User->>API: 주문 생성 요청
+    User->>API: 주문 생성 요청 (items: [{productId, quantity}, ...])
     activate API
 
     API->>Service: 주문 생성 트랜잭션 시작
     activate Service
 
-    Service->>ProdRepo: 재고 차감 요청
-
+    Service->>Service: generateOrderNumber() — UUID 기반 주문번호 생성
+    Service->>ProdRepo: 재고 확인 및 차감 요청
     ProdRepo-->>Service: 성공 여부 반환
 
     alt 재고 부족
         Service-->>API: 재고 부족 예외 던짐
         API-->>User: 400 Bad Request (품절)
     else 재고 충분 및 차감 완료
-        Service->>OrderRepo: 주문(Order) & 상세(OrderItems) 저장
-        OrderRepo-->>Service: 저장 완료
+        Service->>UserRepo: 잔액 확인 요청
+        UserRepo-->>Service: 현재 잔액 반환
 
-        Service->>CartRepo: 장바구니 데이터 삭제
-        CartRepo-->>Service: 삭제 완료
+        alt 잔액 부족
+            Service-->>API: 잔액 부족 예외 던짐
+            API-->>User: 400 Bad Request (잔액 부족)
+        else 잔액 충분
+            Service->>UserRepo: 잔액 차감 (balance - totalAmount)
+            Service->>OrderRepo: 주문(Order) & 상세(OrderItems) 저장
+            OrderRepo-->>Service: 저장 완료
 
-        Service-->>API: 주문 성공 응답
-        deactivate Service
-        API-->>User: 201 Created (주문 완료)
+            Service-->>API: 주문 성공 응답
+            deactivate Service
+            API-->>User: 201 Created (주문 완료)
+        end
     end
     deactivate API
 ```
@@ -105,6 +112,7 @@ title 주문 생성 (재고 차감 및 장바구니 삭제)
     participant S as Order Service
     participant OR as Order Repository
     participant PR as Product Repository
+    participant UR as User Repository
 
     U->>API: 상태 변경 요청 (Approve/Cancel)
     activate API
@@ -122,7 +130,9 @@ title 주문 생성 (재고 차감 및 장바구니 삭제)
         alt 관리자 승인 (Approve)
             S->>OR: 상태를 'CONFIRMED'로 업데이트
         else 사용자 취소 (Cancel)
+            Note over S,UR: @Transactional — 재고 복구 + 잔액 복구 + 상태 업데이트 원자적 처리
             S->>PR: 재고 복구 (stock + n)
+            S->>UR: 잔액 복구 (balance + totalAmount)
             S->>OR: 상태를 'CANCELLED'로 업데이트
         end
         S-->>API: 성공 응답

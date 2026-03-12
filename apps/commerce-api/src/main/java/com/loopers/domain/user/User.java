@@ -32,6 +32,9 @@ public class User extends BaseEntity {
     @Column(name = "email", nullable = false, length = 100)
     private String email;
 
+    @Column(name = "balance", nullable = false)
+    private Long balance = 0L;
+
     protected User() {}
 
     public User(String loginId, String encryptedPassword, String name, String birthday, String email) {
@@ -40,6 +43,17 @@ public class User extends BaseEntity {
         this.name = name;
         this.birthday = birthday;
         this.email = email;
+    }
+
+    public void deductBalance(Long amount) {
+        if (this.balance < amount) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "잔액이 부족합니다.");
+        }
+        this.balance -= amount;
+    }
+
+    public void restoreBalance(Long amount) {
+        this.balance += amount;
     }
 
     public String getMaskedName() {

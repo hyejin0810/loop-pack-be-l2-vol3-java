@@ -16,6 +16,7 @@ classDiagram
         +String password
         +String name
         +String email
+        +Long balance
     }
 
     class Brand {
@@ -47,14 +48,7 @@ classDiagram
         +Long productId
     }
 
-    class Cart {
-        <<Entity>>
-        +Long id
-        +Long userId
-        +Long productId
-        +Integer quantity
-        +updateQuantity(quantity) void
-    }
+
 
     class Order {
         <<Entity>>
@@ -92,10 +86,8 @@ classDiagram
 
     Brand "1" --> "N" Product : 보유
     User "1" --> "N" Like : 좋아요
-    User "1" --> "N" Cart : 장바구니
     User "1" --> "N" Order : 주문
     Product "1" --> "N" Like : 받음
-    Product "1" --> "N" Cart : 담김
     Product "1" --> "N" OrderItem : 주문됨
     Order "1" --> "N" OrderItem : 포함
     Order --> OrderStatus : 상태
@@ -117,11 +109,23 @@ classDiagram
         +cancelOrder(orderNumber) void
         +getOrders(userId, pageable) Page~Order~
         +getOrderDetail(orderId) Order
+        +generateOrderNumber() String
     }
 
-    LikeService --> Product : likesCount 증감
+    %% ============================================
+    %% Facade 정의
+    %% ============================================
+
+    class OrderFacade {
+        <<Facade>>
+        +createOrder(userId, items) Order
+        +cancelOrder(orderNumber) void
+    }
+
+    LikeService --> Product : likesCount 증감 (@Version 낙관적 락)
+    OrderFacade --> OrderService : 주문 처리 위임
     OrderService --> Product : 재고 차감/복구
-    OrderService --> Cart : 주문 시 장바구니 삭제
+    OrderService --> User : 잔액 확인/차감/복구
     OrderService --> OrderItem : 스냅샷 저장
 
 ```

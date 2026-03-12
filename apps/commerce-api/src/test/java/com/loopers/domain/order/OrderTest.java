@@ -1,0 +1,147 @@
+package com.loopers.domain.order;
+
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class OrderTest {
+
+    @DisplayName("주문 항목 생성")
+    @Nested
+    class CreateOrderItem {
+
+        @DisplayName("유효한 정보로 생성하면, 스냅샷 정보가 저장된다.")
+        @Test
+        void savesSnapshot_whenInputIsValid() {
+            // Act
+            OrderItem item = new OrderItem(1L, 2L, "나이키 신발", "나이키", "url", 10000, 3);
+
+            // Assert
+            assertThat(item.getProductName()).isEqualTo("나이키 신발");
+            assertThat(item.getBrandName()).isEqualTo("나이키");
+            assertThat(item.getImageUrl()).isEqualTo("url");
+            assertThat(item.getPrice()).isEqualTo(10000);
+            assertThat(item.getQuantity()).isEqualTo(3);
+        }
+    }
+
+    @DisplayName("주문 생성")
+    @Nested
+    class Create {
+
+        @DisplayName("유효한 정보로 생성하면, PENDING 상태의 주문이 반환된다.")
+        @Test
+        void returnsOrder_withPendingStatus() {
+            // Act
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
+
+            // Assert
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+        }
+
+        @DisplayName("totalAmount가 0 이하이면, BAD_REQUEST 예외가 발생한다.")
+        @Test
+        void throwsBadRequest_whenTotalAmountIsNotPositive() {
+            // Act & Assert
+            CoreException exception = assertThrows(CoreException.class,
+                () -> new Order(1L, "ORD-20240101-ABCD1234", 0L));
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+    }
+
+    @DisplayName("쿠폰 적용 주문 생성")
+    @Nested
+    class CreateWithCoupon {
+
+        @DisplayName("쿠폰을 적용하면, 할인 금액과 최종 금액이 저장된다.")
+        @Test
+        void savesDiscountAndFinalAmount_whenCouponApplied() {
+            // Act
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L, 5000L, 10L);
+
+            // Assert
+            assertThat(order.getOriginalAmount()).isEqualTo(50000L);
+            assertThat(order.getDiscountAmount()).isEqualTo(5000L);
+            assertThat(order.getTotalAmount()).isEqualTo(45000L);
+            assertThat(order.getIssuedCouponId()).isEqualTo(10L);
+        }
+
+        @DisplayName("쿠폰 없이 주문하면, 할인 금액은 0이고 원래 금액과 최종 금액이 동일하다.")
+        @Test
+        void discountIsZero_whenNoCoupon() {
+            // Act
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
+
+            // Assert
+            assertThat(order.getOriginalAmount()).isEqualTo(50000L);
+            assertThat(order.getDiscountAmount()).isEqualTo(0L);
+            assertThat(order.getTotalAmount()).isEqualTo(50000L);
+            assertThat(order.getIssuedCouponId()).isNull();
+        }
+    }
+
+    @DisplayName("주문 승인")
+    @Nested
+    class Approve {
+
+        @DisplayName("PENDING 상태의 주문을 승인하면, CONFIRMED 상태가 된다.")
+        @Test
+        void confirmsOrder_whenStatusIsPending() {
+            // Arrange
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
+
+            // Act
+            order.approve();
+
+            // Assert
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+        }
+
+        @DisplayName("PENDING이 아닌 주문을 승인하면, BAD_REQUEST 예외가 발생한다.")
+        @Test
+        void throwsBadRequest_whenOrderIsNotPending() {
+            // Arrange
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
+            order.approve();
+
+            // Act & Assert
+            CoreException exception = assertThrows(CoreException.class, order::approve);
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+    }
+
+    @DisplayName("주문 취소")
+    @Nested
+    class Cancel {
+
+        @DisplayName("PENDING 상태의 주문을 취소하면, CANCELLED 상태가 된다.")
+        @Test
+        void cancelsOrder_whenStatusIsPending() {
+            // Arrange
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
+
+            // Act
+            order.cancel();
+
+            // Assert
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @DisplayName("PENDING이 아닌 주문을 취소하면, BAD_REQUEST 예외가 발생한다.")
+        @Test
+        void throwsBadRequest_whenOrderIsNotPending() {
+            // Arrange
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
+            order.cancel();
+
+            // Act & Assert
+            CoreException exception = assertThrows(CoreException.class, order::cancel);
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+    }
+}

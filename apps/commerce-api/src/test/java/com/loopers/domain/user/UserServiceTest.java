@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.loopers.application.user.UserInfo;
-
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -132,18 +130,17 @@ class UserServiceTest {
             User result = userService.signUp(loginId, rawPassword, "홍길동", "19900101", "test@example.com");
 
             // Assert
-            assertThat(result).isNotNull();
             assertThat(result.getLoginId()).isEqualTo("newuser");
         }
     }
 
-    @DisplayName("내정보 조회")
+    @DisplayName("인증")
     @Nested
-    class GetMyInfo {
+    class Authenticate {
 
-        @DisplayName("인증에 성공하면, 마스킹된 회원 정보를 반환한다.")
+        @DisplayName("loginId와 비밀번호가 일치하면, User를 반환한다.")
         @Test
-        void returnsMaskedUserInfo_whenAuthenticated() {
+        void returnsUser_whenCredentialsMatch() {
             // Arrange
             String loginId = "testuser";
             String rawPassword = "Test1234!";
@@ -153,11 +150,10 @@ class UserServiceTest {
             when(passwordEncoder.matches(rawPassword, "encrypted")).thenReturn(true);
 
             // Act
-            UserInfo result = userService.getMyInfo(loginId, rawPassword);
+            User result = userService.authenticate(loginId, rawPassword);
 
             // Assert
-            assertThat(result.loginId()).isEqualTo("testuser");
-            assertThat(result.name()).isEqualTo("홍길*");
+            assertThat(result.getLoginId()).isEqualTo(loginId);
         }
 
         @DisplayName("존재하지 않는 loginId이면, NOT_FOUND 예외가 발생한다.")
@@ -168,7 +164,7 @@ class UserServiceTest {
 
             // Act
             CoreException exception = assertThrows(CoreException.class, () ->
-                userService.getMyInfo("nouser", "Test1234!")
+                userService.authenticate("nouser", "Test1234!")
             );
 
             // Assert
@@ -187,7 +183,7 @@ class UserServiceTest {
 
             // Act
             CoreException exception = assertThrows(CoreException.class, () ->
-                userService.getMyInfo(loginId, "wrongpw1!")
+                userService.authenticate(loginId, "wrongpw1!")
             );
 
             // Assert

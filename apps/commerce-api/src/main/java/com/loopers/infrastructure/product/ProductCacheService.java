@@ -11,7 +11,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import org.springframework.data.redis.core.ScanOptions;
+
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -112,11 +115,16 @@ public class ProductCacheService {
         }
     }
 
-    // 목록 캐시 전체 무효화 (product:list:* 패턴)
+    // 목록 캐시 전체 무효화 (SCAN 기반 - 블로킹 방지)
     public void deleteListAll() {
         try {
-            Set<String> keys = masterRedisTemplate.keys(LIST_KEY_PREFIX + "*");
-            if (keys != null && !keys.isEmpty()) {
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(LIST_KEY_PREFIX + "*")
+                    .count(100)
+                    .build();
+            List<String> keys = new ArrayList<>();
+            masterRedisTemplate.scan(options).forEachRemaining(keys::add);
+            if (!keys.isEmpty()) {
                 masterRedisTemplate.delete(keys);
             }
         } catch (Exception e) {

@@ -21,12 +21,12 @@ import java.util.List;
 public class PaymentSyncScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentSyncScheduler.class);
-    private static final int PENDING_THRESHOLD_MINUTES = 10;
+    private static final int PENDING_THRESHOLD_MINUTES = 3;
 
     private final PaymentService paymentService;
     private final PaymentFacade paymentFacade;
 
-    @Scheduled(fixedDelay = 5 * 60 * 1000)  // 5분마다
+    @Scheduled(fixedDelay = 60 * 1000)  // 1분마다
     public void syncStalePendingPayments() {
         List<Payment> stalePending = paymentService.getPendingPaymentsOlderThan(PENDING_THRESHOLD_MINUTES);
         if (stalePending.isEmpty()) {

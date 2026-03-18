@@ -93,4 +93,9 @@ public class Payment extends BaseEntity {
         this.status = PaymentStatus.TIMEOUT;
         this.failureReason = "PG 요청 타임아웃";
     }
+
+    /** 이미 최종 처리된 결제인지 확인 — 중복 콜백 멱등성 보장에 사용 */
+    public boolean isFinalized() {
+        return this.status == PaymentStatus.COMPLETED || this.status == PaymentStatus.FAILED;
+    }
 }

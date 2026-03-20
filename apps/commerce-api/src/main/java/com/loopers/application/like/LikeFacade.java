@@ -8,6 +8,7 @@ import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
+import com.loopers.infrastructure.product.ProductCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class LikeFacade {
     private final ProductService productService;
     private final UserService userService;
     private final BrandService brandService;
+    private final ProductCacheService productCacheService;
 
     @Transactional(readOnly = true)
     public List<ProductInfo> getLikedProducts(String loginId, String rawPassword) {
@@ -45,6 +47,8 @@ public class LikeFacade {
         User user = userService.authenticate(loginId, rawPassword);
         likeService.addLike(user.getId(), productId);
         productService.increaseLikesCount(productId);
+        productCacheService.delete(productId);      // likes_count 변경 → 상세 캐시 무효화
+        productCacheService.deleteListAll();         // likes_desc 정렬 순서 변경 → 목록 캐시 무효화
     }
 
     @Transactional
@@ -52,5 +56,7 @@ public class LikeFacade {
         User user = userService.authenticate(loginId, rawPassword);
         likeService.removeLike(user.getId(), productId);
         productService.decreaseLikesCount(productId);
+        productCacheService.delete(productId);      // likes_count 변경 → 상세 캐시 무효화
+        productCacheService.deleteListAll();         // likes_desc 정렬 순서 변경 → 목록 캐시 무효화
     }
 }

@@ -33,7 +33,13 @@ public class PgPaymentCaller {
         throw new PgUnavailableException("PG 시스템에 접근할 수 없습니다.", t);
     }
 
+    @CircuitBreaker(name = "pgCircuit", fallbackMethod = "getPaymentsByOrderIdFallback")
     public List<PgStatusResponse> getPaymentsByOrderId(String userId, String orderId) {
         return pgClient.getPaymentsByOrderId(userId, orderId);
+    }
+
+    public List<PgStatusResponse> getPaymentsByOrderIdFallback(String userId, String orderId, Throwable t) {
+        log.warn("[PG] CircuitBreaker open으로 조회 불가: orderId={}, error={}", orderId, t.getMessage());
+        return List.of();
     }
 }

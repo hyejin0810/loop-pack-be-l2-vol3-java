@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 콜백 누락 감지 스케줄러
  *
- * 5분마다 실행하여 10분 이상 PENDING 상태인 결제를 PG에 직접 조회,
+ * 1분마다 실행하여 5분 이상 PENDING 상태인 결제를 PG에 직접 조회,
  * 콜백을 놓친 결제를 자동으로 처리(SAGA 재실행)한다.
  */
 @RequiredArgsConstructor
@@ -21,7 +21,7 @@ import java.util.List;
 public class PaymentSyncScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentSyncScheduler.class);
-    private static final int PENDING_THRESHOLD_MINUTES = 3;
+    private static final int PENDING_THRESHOLD_MINUTES = 5;
 
     private final PaymentService paymentService;
     private final PaymentFacade paymentFacade;

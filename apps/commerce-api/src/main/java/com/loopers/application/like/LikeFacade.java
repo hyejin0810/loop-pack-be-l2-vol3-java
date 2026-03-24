@@ -1,16 +1,23 @@
 package com.loopers.application.like;
 
 import com.loopers.application.product.ProductInfo;
+import com.loopers.confg.kafka.KafkaTopics;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.like.LikeAddedEvent;
+import com.loopers.domain.like.LikeRemovedEvent;
 import com.loopers.domain.like.LikeService;
+import com.loopers.domain.outbox.OutboxEventPublisher;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +31,8 @@ public class LikeFacade {
     private final ProductService productService;
     private final UserService userService;
     private final BrandService brandService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     @Transactional(readOnly = true)
     public List<ProductInfo> getLikedProducts(String loginId, String rawPassword) {
@@ -43,16 +52,29 @@ public class LikeFacade {
     @Transactional
     public void addLike(String loginId, String rawPassword, Long productId) {
         User user = userService.authenticate(loginId, rawPassword);
-        Product product = productService.getProduct(productId);
+        productService.getProduct(productId);
         likeService.addLike(user.getId(), productId);
-        product.increaseLikes();
+        // Outbox에 저장 (같은 트랜잭션) → 릴레이가 Kafka로 발행
+        outboxEventPublisher.publish(
+            KafkaTopics.CATALOG_EVENTS,
+            productId.toString(),
+            "LIKE_ADDED",
+            Map.of("userId", user.getId(), "productId", productId)
+        );
+        eventPublisher.publishEvent(new LikeAddedEvent(user.getId(), productId));
     }
 
     @Transactional
     public void removeLike(String loginId, String rawPassword, Long productId) {
         User user = userService.authenticate(loginId, rawPassword);
-        Product product = productService.getProduct(productId);
+        productService.getProduct(productId);
         likeService.removeLike(user.getId(), productId);
-        product.decreaseLikes();
+        outboxEventPublisher.publish(
+            KafkaTopics.CATALOG_EVENTS,
+            productId.toString(),
+            "LIKE_REMOVED",
+            Map.of("userId", user.getId(), "productId", productId)
+        );
+        eventPublisher.publishEvent(new LikeRemovedEvent(user.getId(), productId));
     }
 }

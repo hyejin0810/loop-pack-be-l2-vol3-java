@@ -60,4 +60,16 @@ public class ProductService {
             productRepository.save(product);
         });
     }
+
+    @Transactional
+    public void increaseLikes(Long productId) {
+        Product product = getProduct(productId);
+        product.increaseLikes();
+    }
+
+    @Transactional
+    public void decreaseLikes(Long productId) {
+        Product product = getProduct(productId);
+        product.decreaseLikes();
+    }
 }

@@ -44,6 +44,11 @@ public class OrderService {
         return orderItemRepository.findByOrderId(orderId);
     }
 
+    @Transactional(readOnly = true)
+    public List<OrderItem> getOrderItemsByOrderIds(List<Long> orderIds) {
+        return orderItemRepository.findByOrderIds(orderIds);
+    }
+
     @Transactional
     public Order cancelOrder(Order order) {
         order.cancel();

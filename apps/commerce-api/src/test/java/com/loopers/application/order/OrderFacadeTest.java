@@ -8,6 +8,7 @@ import com.loopers.domain.order.OrderService;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
+import com.loopers.infrastructure.preorder.PreOrderCacheService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,11 +46,14 @@ class OrderFacadeTest {
     @Mock
     private IssuedCouponRepository issuedCouponRepository;
 
+    @Mock
+    private PreOrderCacheService preOrderCacheService;
+
     private OrderFacade orderFacade;
 
     @BeforeEach
     void setUp() {
-        orderFacade = new OrderFacade(orderService, productService, userService, brandService, couponTemplateRepository, issuedCouponRepository);
+        orderFacade = new OrderFacade(orderService, productService, userService, brandService, couponTemplateRepository, issuedCouponRepository, preOrderCacheService);
     }
 
     @DisplayName("주문 상세 조회")

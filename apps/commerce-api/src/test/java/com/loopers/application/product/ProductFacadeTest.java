@@ -4,6 +4,7 @@ import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
+import com.loopers.infrastructure.product.ProductCacheService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,11 +36,14 @@ class ProductFacadeTest {
     @Mock
     private BrandService brandService;
 
+    @Mock
+    private ProductCacheService productCacheService;
+
     private ProductFacade productFacade;
 
     @BeforeEach
     void setUp() {
-        productFacade = new ProductFacade(productService, brandService);
+        productFacade = new ProductFacade(productService, brandService, productCacheService);
     }
 
     @DisplayName("상품 목록 조회")

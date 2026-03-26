@@ -24,4 +24,9 @@ public class Coupon {
     private Integer totalQuantity;
 
     protected Coupon() {}
+
+    public Coupon(String name, int totalQuantity) {
+        this.name = name;
+        this.totalQuantity = totalQuantity;
+    }
 }

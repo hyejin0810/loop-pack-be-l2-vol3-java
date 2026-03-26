@@ -52,7 +52,6 @@ public class CatalogEventConsumer {
 
         String eventId = node.get("eventId").asText();
         String eventType = node.get("eventType").asText();
-        ZonedDateTime occurredAt = ZonedDateTime.parse(node.get("occurredAt").asText());
 
         // 멱등 처리: 이미 처리된 이벤트면 skip
         if (eventHandledRepository.existsById(eventId)) {
@@ -60,6 +59,8 @@ public class CatalogEventConsumer {
             return;
         }
 
+        // occurredAt 기반 최신 이벤트만 반영 — ProductMetrics 내부에서 isAfter 비교
+        ZonedDateTime occurredAt = objectMapper.treeToValue(node.get("occurredAt"), ZonedDateTime.class);
         JsonNode data = node.get("data");
         Long productId = data.get("productId").asLong();
 
@@ -67,12 +68,17 @@ public class CatalogEventConsumer {
             .orElseGet(() -> productMetricsRepository.save(new ProductMetrics(productId)));
 
         switch (eventType) {
-            case "LIKE_ADDED" -> metrics.increaseLikeCount(occurredAt);
-            case "LIKE_REMOVED" -> metrics.decreaseLikeCount(occurredAt);
+            case "LIKE_ADDED" -> {
+                metrics.increaseLikeCount(occurredAt);
+                log.info("[CatalogConsumer] 좋아요 증가 처리: productId={}", productId);
+            }
+            case "LIKE_REMOVED" -> {
+                metrics.decreaseLikeCount(occurredAt);
+                log.info("[CatalogConsumer] 좋아요 감소 처리: productId={}", productId);
+            }
             default -> log.warn("[CatalogConsumer] 알 수 없는 이벤트 타입: {}", eventType);
         }
 
         eventHandledRepository.save(new EventHandled(eventId));
-        log.info("[CatalogConsumer] 처리 완료: eventId={}, eventType={}, productId={}", eventId, eventType, productId);
     }
 }

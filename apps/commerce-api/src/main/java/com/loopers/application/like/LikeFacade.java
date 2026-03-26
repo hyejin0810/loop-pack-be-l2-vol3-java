@@ -17,8 +17,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,12 +52,11 @@ public class LikeFacade {
         User user = userService.authenticate(loginId, rawPassword);
         productService.getProduct(productId);
         likeService.addLike(user.getId(), productId);
-        // Outbox에 저장 (같은 트랜잭션) → 릴레이가 Kafka로 발행
         outboxEventPublisher.publish(
             KafkaTopics.CATALOG_EVENTS,
             productId.toString(),
             "LIKE_ADDED",
-            Map.of("userId", user.getId(), "productId", productId)
+            Map.of("productId", productId)
         );
         eventPublisher.publishEvent(new LikeAddedEvent(user.getId(), productId));
     }
@@ -73,7 +70,7 @@ public class LikeFacade {
             KafkaTopics.CATALOG_EVENTS,
             productId.toString(),
             "LIKE_REMOVED",
-            Map.of("userId", user.getId(), "productId", productId)
+            Map.of("productId", productId)
         );
         eventPublisher.publishEvent(new LikeRemovedEvent(user.getId(), productId));
     }

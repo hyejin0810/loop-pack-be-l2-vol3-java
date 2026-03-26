@@ -71,7 +71,7 @@ public class CouponIssueConsumer {
         CouponIssueRequest request = couponIssueRequestRepository.findById(requestId)
             .orElseThrow(() -> new IllegalStateException("CouponIssueRequest not found: " + requestId));
 
-        Coupon coupon = couponRepository.findById(couponId)
+        Coupon coupon = couponRepository.findByIdWithLock(couponId)
             .orElseThrow(() -> new IllegalStateException("Coupon not found: " + couponId));
 
         // 중복 발급 여부 확인

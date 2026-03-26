@@ -31,6 +31,12 @@ public class CouponIssueRequest {
 
     protected CouponIssueRequest() {}
 
+    public CouponIssueRequest(Long couponId, Long userId) {
+        this.couponId = couponId;
+        this.userId = userId;
+        this.status = CouponIssueStatus.PENDING;
+    }
+
     public void markSuccess() {
         this.status = CouponIssueStatus.SUCCESS;
     }

@@ -2,6 +2,8 @@ package com.loopers.application.order;
 
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.coupon.CouponTemplateRepository;
+import com.loopers.domain.coupon.IssuedCouponRepository;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderCreatedEvent;
 import com.loopers.domain.order.OrderService;
@@ -10,6 +12,7 @@ import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
+import com.loopers.infrastructure.preorder.PreOrderCacheService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;

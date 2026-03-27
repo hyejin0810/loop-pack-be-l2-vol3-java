@@ -54,6 +54,37 @@ class OrderTest {
         }
     }
 
+    @DisplayName("쿠폰 적용 주문 생성")
+    @Nested
+    class CreateWithCoupon {
+
+        @DisplayName("쿠폰을 적용하면, 할인 금액과 최종 금액이 저장된다.")
+        @Test
+        void savesDiscountAndFinalAmount_whenCouponApplied() {
+            // Act
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L, 5000L, 10L);
+
+            // Assert
+            assertThat(order.getOriginalAmount()).isEqualTo(50000L);
+            assertThat(order.getDiscountAmount()).isEqualTo(5000L);
+            assertThat(order.getTotalAmount()).isEqualTo(45000L);
+            assertThat(order.getIssuedCouponId()).isEqualTo(10L);
+        }
+
+        @DisplayName("쿠폰 없이 주문하면, 할인 금액은 0이고 원래 금액과 최종 금액이 동일하다.")
+        @Test
+        void discountIsZero_whenNoCoupon() {
+            // Act
+            Order order = new Order(1L, "ORD-20240101-ABCD1234", 50000L);
+
+            // Assert
+            assertThat(order.getOriginalAmount()).isEqualTo(50000L);
+            assertThat(order.getDiscountAmount()).isEqualTo(0L);
+            assertThat(order.getTotalAmount()).isEqualTo(50000L);
+            assertThat(order.getIssuedCouponId()).isNull();
+        }
+    }
+
     @DisplayName("주문 승인")
     @Nested
     class Approve {

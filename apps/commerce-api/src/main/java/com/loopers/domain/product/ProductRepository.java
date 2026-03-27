@@ -12,4 +12,8 @@ public interface ProductRepository {
     List<Product> findAllByBrandId(Long brandId);
     List<Product> findAllByIds(List<Long> ids);
     Product save(Product product);
+    void incrementLikesCount(Long id);
+    void decrementLikesCount(Long id);
+    int decrementStock(Long id, int quantity);
+    void incrementStock(Long id, int quantity);
 }

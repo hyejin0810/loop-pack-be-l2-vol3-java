@@ -41,7 +41,7 @@ export const options = {
 };
 
 export default function () {
-    const loginId = `user${(__VU % 500) + 1}`;
+    const loginId = `user${(__VU % 100) + 1}`;
 
     const res = http.post(`${BASE_URL}/api/v1/queue/enter`, null, {
         headers: {

@@ -3,6 +3,7 @@ package com.loopers.infrastructure.queue;
 import com.loopers.config.redis.RedisConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Component;
@@ -18,15 +19,17 @@ public class QueueCacheService {
 
     static final String QUEUE_KEY = "waiting-queue";
     static final String TOKEN_KEY_PREFIX = "entry-token:";
-    static final Duration TOKEN_TTL = Duration.ofMinutes(5);
 
+    private final Duration tokenTtl;
     private final RedisTemplate<String, String> defaultRedisTemplate;
     private final RedisTemplate<String, String> masterRedisTemplate;
 
     public QueueCacheService(
+        @Value("${queue.token.ttl-seconds:300}") long tokenTtlSeconds,
         RedisTemplate<String, String> defaultRedisTemplate,
         @Qualifier(RedisConfig.REDIS_TEMPLATE_MASTER) RedisTemplate<String, String> masterRedisTemplate
     ) {
+        this.tokenTtl = Duration.ofSeconds(tokenTtlSeconds);
         this.defaultRedisTemplate = defaultRedisTemplate;
         this.masterRedisTemplate = masterRedisTemplate;
     }
@@ -73,7 +76,7 @@ public class QueueCacheService {
      */
     public String issueToken(Long userId) {
         String token = UUID.randomUUID().toString();
-        masterRedisTemplate.opsForValue().set(tokenKey(userId), token, TOKEN_TTL);
+        masterRedisTemplate.opsForValue().set(tokenKey(userId), token, tokenTtl);
         return token;
     }
 

@@ -28,7 +28,7 @@ public class CatalogEventConsumer {
 
     private static final double WEIGHT_VIEW = 0.1;
     private static final double WEIGHT_LIKE = 0.2;
-    private static final double WEIGHT_ORDER = 0.6;
+    private static final double WEIGHT_ORDER = 0.7;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final EventHandledJpaRepository eventHandledRepository;

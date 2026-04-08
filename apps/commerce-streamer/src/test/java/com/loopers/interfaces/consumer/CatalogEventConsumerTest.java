@@ -130,14 +130,14 @@ class CatalogEventConsumerTest {
             assertThat(scoreCaptor.getValue()).isEqualTo(0.2);
         }
 
-        @DisplayName("주문 이벤트 발생 시 ZSET에 0.6×price×quantity 점수가 적립된다.")
+        @DisplayName("주문 이벤트 발생 시 ZSET에 0.7×price×quantity 점수가 적립된다.")
         @Test
         void incrementsOrderScore() {
             // Arrange
             var ack = mock(org.springframework.kafka.support.Acknowledgment.class);
             int price = 10000;
             int quantity = 2;
-            double expectedScore = 0.6 * price * quantity; // 12000.0
+            double expectedScore = 0.7 * price * quantity; // 14000.0
 
             // Act
             consumer.consume(List.of(record(orderedPayload(1L, price, quantity))), ack);
@@ -153,7 +153,7 @@ class CatalogEventConsumerTest {
         void orderScoreIsGreaterThanThreeLikes() {
             // Arrange
             double likeScore = 0.2 * 3;      // 좋아요 3건 = 0.6
-            double orderScore = 0.6 * 1000 * 1; // 주문 1건(1000원×1개) = 600.0
+            double orderScore = 0.7 * 1000 * 1; // 주문 1건(1000원×1개) = 700.0
 
             // Assert
             assertThat(orderScore).isGreaterThan(likeScore);

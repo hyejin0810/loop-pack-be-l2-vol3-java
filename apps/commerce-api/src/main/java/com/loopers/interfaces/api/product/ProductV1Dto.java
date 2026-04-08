@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.product;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductInfo;
 
@@ -48,6 +49,7 @@ public class ProductV1Dto {
         }
     }
 
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     public record ProductDetailResponse(
         Long id,
         Long brandId,

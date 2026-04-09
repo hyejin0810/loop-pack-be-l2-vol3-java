@@ -19,15 +19,16 @@ public class RankingScheduler {
     private final RankingCacheService rankingCacheService;
 
     /**
-     * 매일 자정에 전날 랭킹 점수의 10%를 오늘 키로 복사 (콜드 스타트 완화)
+     * 매일 23:50에 오늘 랭킹 점수의 10%를 내일 키로 미리 복사 (콜드 스타트 완화)
+     * 자정 이전에 내일 키를 생성해두어 날짜 전환 시점의 빈 랭킹을 방지한다.
      */
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 50 23 * * *")
     public void carryOverRanking() {
-        String yesterday = LocalDate.now().minusDays(1).format(DATE_FORMATTER);
         String today = LocalDate.now().format(DATE_FORMATTER);
+        String tomorrow = LocalDate.now().plusDays(1).format(DATE_FORMATTER);
 
-        log.info("[RankingScheduler] Score Carry-Over 시작: {} → {}", yesterday, today);
-        rankingCacheService.carryOver(yesterday, today);
+        log.info("[RankingScheduler] Score Carry-Over 시작: {} → {}", today, tomorrow);
+        rankingCacheService.carryOver(today, tomorrow);
         log.info("[RankingScheduler] Score Carry-Over 완료");
     }
 }

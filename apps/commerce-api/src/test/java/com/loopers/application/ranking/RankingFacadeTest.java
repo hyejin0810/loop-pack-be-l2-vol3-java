@@ -4,6 +4,8 @@ import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
+import com.loopers.infrastructure.ranking.ProductRankMonthlyJpaRepository;
+import com.loopers.infrastructure.ranking.ProductRankWeeklyJpaRepository;
 import com.loopers.infrastructure.ranking.RankingCacheService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,11 +32,18 @@ class RankingFacadeTest {
     @Mock
     private BrandService brandService;
 
+    @Mock
+    private ProductRankWeeklyJpaRepository productRankWeeklyJpaRepository;
+
+    @Mock
+    private ProductRankMonthlyJpaRepository productRankMonthlyJpaRepository;
+
     private RankingFacade rankingFacade;
 
     @BeforeEach
     void setUp() {
-        rankingFacade = new RankingFacade(rankingCacheService, productService, brandService);
+        rankingFacade = new RankingFacade(rankingCacheService, productService, brandService,
+            productRankWeeklyJpaRepository, productRankMonthlyJpaRepository);
     }
 
     @DisplayName("랭킹 목록 조회")
@@ -48,7 +57,7 @@ class RankingFacadeTest {
             given(rankingCacheService.getProductIds("20260408", 0, 20)).willReturn(List.of());
 
             // Act
-            List<RankingInfo> result = rankingFacade.getRankings("20260408", 1, 20);
+            List<RankingInfo> result = rankingFacade.getRankings("20260408", 1, 20, RankingType.DAILY);
 
             // Assert
             assertThat(result).isEmpty();
@@ -69,7 +78,7 @@ class RankingFacadeTest {
             given(brandService.getBrandsByIds(List.of(1L))).willReturn(List.of(brand));
 
             // Act
-            List<RankingInfo> result = rankingFacade.getRankings("20260408", 1, 20);
+            List<RankingInfo> result = rankingFacade.getRankings("20260408", 1, 20, RankingType.DAILY);
 
             // Assert
             assertThat(result).hasSize(2);
@@ -92,7 +101,7 @@ class RankingFacadeTest {
             given(brandService.getBrandsByIds(List.of(1L))).willReturn(List.of(brand));
 
             // Act
-            List<RankingInfo> result = rankingFacade.getRankings("20260408", 2, 20);
+            List<RankingInfo> result = rankingFacade.getRankings("20260408", 2, 20, RankingType.DAILY);
 
             // Assert
             assertThat(result.get(0).rank()).isEqualTo(21L);
@@ -110,7 +119,7 @@ class RankingFacadeTest {
             given(rankingCacheService.getTotalCount("20260408")).willReturn(3L);
 
             // Act
-            long count = rankingFacade.getTotalCount("20260408");
+            long count = rankingFacade.getTotalCount("20260408", RankingType.DAILY);
 
             // Assert
             assertThat(count).isEqualTo(3L);

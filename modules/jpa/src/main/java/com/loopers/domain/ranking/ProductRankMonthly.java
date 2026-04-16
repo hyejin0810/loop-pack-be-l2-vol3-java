@@ -55,4 +55,8 @@ public class ProductRankMonthly {
         entity.updatedAt = LocalDateTime.now();
         return entity;
     }
+
+    public void assignRank(int rank) {
+        this.rankPosition = rank;
+    }
 }
